@@ -177,7 +177,8 @@ private fun ModeSwitch(mode: ViewMode, onMode: (ViewMode) -> Unit) {
                 Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (selected) Cyan else Color.Transparent)
+                    .background(if (selected) Cyan.copy(alpha = 0.16f) else Color.Transparent)
+                    .border(if (selected) 1.5.dp else 0.dp, if (selected) Cyan else Color.Transparent, RoundedCornerShape(12.dp))
                     .clickable { onMode(m) }
                     .padding(vertical = 11.dp),
                 contentAlignment = Alignment.Center,
@@ -186,12 +187,12 @@ private fun ModeSwitch(mode: ViewMode, onMode: (ViewMode) -> Unit) {
                     Text(
                         if (m == ViewMode.SIMPLE) "Vista sencilla" else "Vista Pro",
                         style = MaterialTheme.typography.titleSmall,
-                        color = if (selected) Ink else MaterialTheme.colorScheme.onSurface,
+                        color = if (selected) Cyan else MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         if (m == ViewMode.SIMPLE) "Para cualquiera" else "Para tecnicos",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (selected) Ink.copy(alpha = 0.7f) else TextMuted,
+                        color = if (selected) Cyan.copy(alpha = 0.85f) else TextMuted,
                     )
                 }
             }
@@ -257,9 +258,9 @@ private fun BottomNav(current: Tab, onSelect: (Tab) -> Unit) {
                     icon = { Icon(t.icon, contentDescription = t.label) },
                     label = { Text(t.label, style = MaterialTheme.typography.labelSmall) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Ink,
+                        selectedIconColor = Cyan,
                         selectedTextColor = Cyan,
-                        indicatorColor = Cyan,
+                        indicatorColor = Cyan.copy(alpha = 0.18f),
                         unselectedIconColor = TextMuted,
                         unselectedTextColor = TextMuted,
                     ),

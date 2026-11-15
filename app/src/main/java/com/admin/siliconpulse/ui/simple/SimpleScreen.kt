@@ -58,6 +58,8 @@ import com.admin.siliconpulse.ui.theme.Amber
 import com.admin.siliconpulse.ui.theme.Cyan
 import com.admin.siliconpulse.ui.theme.Ink
 import com.admin.siliconpulse.ui.theme.Mint
+import com.admin.siliconpulse.ui.theme.Panel
+import com.admin.siliconpulse.ui.theme.PanelHigh
 import com.admin.siliconpulse.ui.theme.Rose
 import com.admin.siliconpulse.ui.theme.TextFaint
 import com.admin.siliconpulse.ui.theme.TextMuted
@@ -197,7 +199,7 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
     val breath by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "breath")
 
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(260.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(300.dp), contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
                 val c = center
                 val base = size.minDimension / 2 * 0.62f
@@ -225,9 +227,9 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
             // Disco oscuro tipo radar: obsidiana con halo cian, anillo luminoso y texto claro.
             Box(
                 Modifier
-                    .size((176 * scale).dp)
+                    .size((204 * scale).dp)
                     .clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(Color(0xFF14233A), Color(0xFF0B1324), Ink)))
+                    .background(Brush.radialGradient(listOf(Cyan.copy(alpha = 0.22f), PanelHigh, Panel)))
                     .border(2.dp, Brush.sweepGradient(listOf(Cyan, Mint, Cyan.copy(alpha = 0.3f), Cyan)), CircleShape)
                     .clickable(enabled = !analyzing, onClick = onClick),
                 contentAlignment = Alignment.Center,
