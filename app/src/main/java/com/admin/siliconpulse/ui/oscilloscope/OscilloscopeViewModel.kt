@@ -10,15 +10,16 @@ import com.admin.siliconpulse.domain.model.SensorChannel
 import com.admin.siliconpulse.domain.model.SensorDescriptor
 import com.admin.siliconpulse.domain.repository.SensorRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -34,12 +35,14 @@ data class OscilloscopeUiState(
     val accuracy: Int = 0,
 )
 
+private data class Selection(val channel: SensorChannel, val rate: SamplingRate, val paused: Boolean)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class OscilloscopeViewModel(private val repo: SensorRepository) : ViewModel() {
 
     val buffer = TraceBuffer(capacity = 512)
 
-    /** Contador de frames: la UI lo observa para redibujar como maximo a ~60 fps, sin importar la tasa del sensor. */
+    /** Contador de frames: la UI lo observa para redibujar a ~60 fps como maximo, sin importar la tasa del sensor. */
     var frame by mutableIntStateOf(0)
         private set
 
@@ -51,22 +54,23 @@ class OscilloscopeViewModel(private val repo: SensorRepository) : ViewModel() {
     )
     val ui: StateFlow<OscilloscopeUiState> = _ui.asStateFlow()
 
-    private var frameJob: Job? = null
-
     init {
+        // Cada cambio de canal/tasa/pausa cancela la suscripcion anterior (flatMapLatest)
+        // y por tanto desregistra el listener del SensorManager: cero fugas.
         viewModelScope.launch {
-            combine(_ui.map3()) { it }
-                .flatMapLatest { (channel, rate, paused) ->
+            _ui.map { Selection(it.channel, it.rate, it.paused) }
+                .distinctUntilChanged()
+                .flatMapLatest { sel ->
                     buffer.clear()
-                    if (paused) kotlinx.coroutines.flow.emptyFlow()
-                    else repo.samples(channel, rate).catch { e -> _ui.update { s -> s.copy(error = e.message) } }
+                    if (sel.paused) emptyFlow()
+                    else repo.samples(sel.channel, sel.rate).catch { e -> _ui.update { s -> s.copy(error = e.message) } }
                 }
-                .collectLatest { sample ->
+                .collect { sample ->
                     buffer.push(sample.x, sample.y, sample.z, sample.timestampNanos)
                     if (sample.accuracy != _ui.value.accuracy) _ui.update { it.copy(accuracy = sample.accuracy) }
                 }
         }
-        frameJob = viewModelScope.launch {
+        viewModelScope.launch {
             while (isActive) {
                 delay(16)
                 frame++
@@ -78,11 +82,4 @@ class OscilloscopeViewModel(private val repo: SensorRepository) : ViewModel() {
     fun select(channel: SensorChannel) = _ui.update { it.copy(channel = channel, error = null) }
     fun setRate(rate: SamplingRate) = _ui.update { it.copy(rate = rate) }
     fun togglePause() = _ui.update { it.copy(paused = !it.paused) }
-
-    private fun MutableStateFlow<OscilloscopeUiState>.map3() =
-        kotlinx.coroutines.flow.flow {
-            collect { emit(Triple(it.channel, it.rate, it.paused)) }
-        }.let { kotlinx.coroutines.flow.distinctUntilChanged(it) }
 }
-
-private fun <T> kotlinx.coroutines.flow.FlowCollector<T>.unused() = Unit

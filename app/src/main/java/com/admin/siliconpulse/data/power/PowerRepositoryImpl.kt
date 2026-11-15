@@ -37,7 +37,7 @@ class PowerRepositoryImpl(private val context: Context) : PowerRepository {
     private val maxFreqs: List<Int> by lazy { (0 until cpuCount).map { readSysInt("/sys/devices/system/cpu/cpu$it/cpufreq/cpuinfo_max_freq") / 1000 } }
 
     override fun observe(): Flow<PowerState> = callbackFlow {
-        @Volatile var batteryIntent: Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        var batteryIntent: Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(c: Context, intent: Intent) {
