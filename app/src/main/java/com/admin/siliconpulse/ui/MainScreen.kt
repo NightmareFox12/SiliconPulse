@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,6 +65,9 @@ import com.admin.siliconpulse.ui.privacy.PrivacyScreen
 import com.admin.siliconpulse.ui.privacy.PrivacyViewModel
 import com.admin.siliconpulse.ui.radios.RadiosScreen
 import com.admin.siliconpulse.ui.radios.RadiosViewModel
+import com.admin.siliconpulse.ui.simple.SimpleScreen
+import com.admin.siliconpulse.ui.simple.SimpleViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.admin.siliconpulse.ui.theme.AccentBrush
 import com.admin.siliconpulse.ui.theme.Amber
 import com.admin.siliconpulse.ui.theme.BackgroundBrush
@@ -85,6 +89,7 @@ enum class Tab(val label: String, val title: String, val caption: String, val ic
 @Composable
 fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequestPermissions: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.SENSORS) }
+    val mode by container.viewMode.mode.collectAsStateWithLifecycle()
 
     val factory = remember(container) {
         viewModelFactory {
@@ -93,6 +98,7 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
             initializer { RadiosViewModel(container.radios) }
             initializer { PowerViewModel(container.power) }
             initializer { ExportViewModel(container.sensors, container.privacy, container.radios, container.power, container.exporter) }
+            initializer { SimpleViewModel(container.privacy, container.power, container.audit) }
         }
     }
 
@@ -100,12 +106,14 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
         Scaffold(
             containerColor = Color.Transparent,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            topBar = { Header(tab) },
-            bottomBar = { BottomNav(tab) { tab = it } },
+            topBar = { Header(tab, mode) { container.viewMode.set(it) } },
+            bottomBar = { if (mode == ViewMode.PRO) BottomNav(tab) { tab = it } },
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
                 if (missingPermissions.isNotEmpty()) PermissionBanner(missingPermissions.size, onRequestPermissions)
-                AnimatedContent(
+                if (mode == ViewMode.SIMPLE) {
+                    SimpleScreen(viewModel(factory = factory))
+                } else AnimatedContent(
                     targetState = tab,
                     transitionSpec = {
                         (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 30 })
@@ -127,7 +135,7 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
 }
 
 @Composable
-private fun Header(tab: Tab) {
+private fun Header(tab: Tab, mode: ViewMode, onMode: (ViewMode) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -142,8 +150,42 @@ private fun Header(tab: Tab) {
             DeviceChip()
         }
         Spacer(Modifier.height(10.dp))
-        Text(tab.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
-        Text(tab.caption, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(if (mode == ViewMode.SIMPLE) "Tu telefono" else tab.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+                Text(if (mode == ViewMode.SIMPLE) "Resumen facil de entender" else tab.caption, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            }
+            ModeSwitch(mode, onMode)
+        }
+    }
+}
+
+/** Conmutador Sencilla / Pro, estilo segmentado. */
+@Composable
+private fun ModeSwitch(mode: ViewMode, onMode: (ViewMode) -> Unit) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Panel)
+            .border(1.dp, Outline, RoundedCornerShape(50))
+            .padding(3.dp),
+    ) {
+        ViewMode.entries.forEach { m ->
+            val selected = m == mode
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(if (selected) Cyan else Color.Transparent)
+                    .clickable { onMode(m) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    if (m == ViewMode.SIMPLE) "Sencilla" else "Pro",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (selected) Ink else TextMuted,
+                )
+            }
+        }
     }
 }
 

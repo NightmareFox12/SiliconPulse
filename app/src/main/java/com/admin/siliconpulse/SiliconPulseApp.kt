@@ -2,7 +2,9 @@ package com.admin.siliconpulse
 
 import android.app.Application
 import android.content.Context
+import com.admin.siliconpulse.data.audit.AppAuditRepository
 import com.admin.siliconpulse.data.export.ReportExporter
+import com.admin.siliconpulse.ui.ViewModePrefs
 import com.admin.siliconpulse.data.power.PowerRepositoryImpl
 import com.admin.siliconpulse.data.privacy.PrivacyRepositoryImpl
 import com.admin.siliconpulse.data.radios.RadioRepositoryImpl
@@ -19,6 +21,8 @@ class AppContainer(context: Context) {
     val radios: RadioRepository by lazy { RadioRepositoryImpl(context) }
     val power: PowerRepository by lazy { PowerRepositoryImpl(context) }
     val exporter: ReportExporter by lazy { ReportExporter(context) }
+    val audit: AppAuditRepository by lazy { AppAuditRepository(context) }
+    val viewMode: ViewModePrefs by lazy { ViewModePrefs(context) }
 }
 
 class SiliconPulseApp : Application() {
