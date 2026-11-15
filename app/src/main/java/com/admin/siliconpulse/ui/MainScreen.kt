@@ -106,6 +106,8 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
     Box(Modifier.fillMaxSize().background(BackgroundBrush)) {
         Scaffold(
             containerColor = Color.Transparent,
+            // Con fondo transparente Compose asumiria negro como color de contenido: lo fijamos.
+            contentColor = MaterialTheme.colorScheme.onBackground,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = { Header(tab, mode) { container.viewMode.set(it) } },
             bottomBar = { if (mode == ViewMode.PRO) BottomNav(tab) { tab = it } },

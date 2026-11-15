@@ -211,7 +211,7 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
                 drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha = 0.35f), Color.Transparent), center = c, radius = base * 1.35f), radius = base * 1.35f, center = c)
                 if (analyzing) {
                     drawArc(
-                        brush = Brush.sweepGradient(listOf(Color.Transparent, Cyan, Violet), center = c),
+                        brush = Brush.sweepGradient(listOf(Color.Transparent, Cyan, Mint), center = c),
                         startAngle = sweep,
                         sweepAngle = 300f,
                         useCenter = false,
@@ -222,22 +222,26 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
                 }
             }
             val scale = if (analyzing) 1f else breath
+            // Disco oscuro tipo radar: obsidiana con halo cian, anillo luminoso y texto claro.
             Box(
                 Modifier
-                    .size((170 * scale).dp)
+                    .size((176 * scale).dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Cyan, Violet)))
+                    .background(Brush.radialGradient(listOf(Color(0xFF14233A), Color(0xFF0B1324), Ink)))
+                    .border(2.dp, Brush.sweepGradient(listOf(Cyan, Mint, Cyan.copy(alpha = 0.3f), Cyan)), CircleShape)
                     .clickable(enabled = !analyzing, onClick = onClick),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (analyzing) {
-                        CircularProgressIndicator(Modifier.size(34.dp), color = Ink, strokeWidth = 3.dp)
+                        CircularProgressIndicator(Modifier.size(34.dp), color = Cyan, strokeWidth = 3.dp)
                         Spacer(Modifier.height(8.dp))
-                        Text("Analizando", style = MaterialTheme.typography.titleSmall, color = Ink, fontWeight = FontWeight.Bold)
+                        Text("Analizando", style = MaterialTheme.typography.titleSmall, color = Cyan, fontWeight = FontWeight.Bold)
                     } else {
-                        Text("ANALIZAR", style = MaterialTheme.typography.titleLarge, color = Ink, fontWeight = FontWeight.Black)
-                        Text("mi telefono", style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.8f))
+                        ShieldGlyph()
+                        Spacer(Modifier.height(6.dp))
+                        Text("ANALIZAR", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Black)
+                        Text("mi telefono", style = MaterialTheme.typography.bodyMedium, color = Cyan)
                     }
                 }
             }
@@ -249,6 +253,29 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
+    }
+}
+
+/** Escudo con tilde dibujado a mano: icono de "auditoria" sin depender de iconos extendidos. */
+@Composable
+private fun ShieldGlyph() {
+    Canvas(Modifier.size(34.dp)) {
+        val w = size.width; val h = size.height
+        val p = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w / 2, 0f)
+            lineTo(w, h * 0.2f)
+            lineTo(w * 0.92f, h * 0.6f)
+            quadraticTo(w * 0.8f, h * 0.9f, w / 2, h)
+            quadraticTo(w * 0.2f, h * 0.9f, w * 0.08f, h * 0.6f)
+            lineTo(0f, h * 0.2f)
+            close()
+        }
+        drawPath(p, Brush.verticalGradient(listOf(Cyan, Mint)), style = Stroke(width = 3f))
+        drawPath(p, Cyan.copy(alpha = 0.12f))
+        val check = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.3f, h * 0.5f); lineTo(w * 0.45f, h * 0.65f); lineTo(w * 0.72f, h * 0.35f)
+        }
+        drawPath(check, Mint, style = Stroke(width = 3.5f, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
     }
 }
 
