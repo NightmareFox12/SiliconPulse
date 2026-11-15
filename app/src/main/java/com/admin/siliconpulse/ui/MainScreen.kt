@@ -24,6 +24,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,12 +60,14 @@ enum class Tab(val label: String, val icon: ImageVector) {
 fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequestPermissions: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.SENSORS) }
 
-    val factory = viewModelFactory {
-        initializer { OscilloscopeViewModel(container.sensors) }
-        initializer { PrivacyViewModel(container.privacy) }
-        initializer { RadiosViewModel(container.radios) }
-        initializer { PowerViewModel(container.power) }
-        initializer { ExportViewModel(container.sensors, container.privacy, container.radios, container.power, container.exporter) }
+    val factory = remember(container) {
+        viewModelFactory {
+            initializer { OscilloscopeViewModel(container.sensors) }
+            initializer { PrivacyViewModel(container.privacy) }
+            initializer { RadiosViewModel(container.radios) }
+            initializer { PowerViewModel(container.power) }
+            initializer { ExportViewModel(container.sensors, container.privacy, container.radios, container.power, container.exporter) }
+        }
     }
 
     Scaffold(

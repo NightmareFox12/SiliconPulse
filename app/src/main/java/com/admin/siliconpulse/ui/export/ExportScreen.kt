@@ -6,8 +6,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -126,6 +127,7 @@ class ExportViewModel(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExportScreen(vm: ExportViewModel) {
     val ui by vm.ui.collectAsStateWithLifecycle()
@@ -144,7 +146,7 @@ fun ExportScreen(vm: ExportViewModel) {
                     color = TextMuted,
                 )
                 Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Button(onClick = vm::buildSnapshot, enabled = !ui.building) {
                         if (ui.building) CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp) else Text("Capturar snapshot")
                     }
