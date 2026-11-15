@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -112,7 +113,7 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
             Column(Modifier.padding(padding).fillMaxSize()) {
                 if (missingPermissions.isNotEmpty()) PermissionBanner(missingPermissions.size, onRequestPermissions)
                 if (mode == ViewMode.SIMPLE) {
-                    SimpleScreen(viewModel(factory = factory))
+                    Box(Modifier.navigationBarsPadding()) { SimpleScreen(viewModel(factory = factory)) }
                 } else AnimatedContent(
                     targetState = tab,
                     transitionSpec = {
@@ -145,45 +146,52 @@ private fun Header(tab: Tab, mode: ViewMode, onMode: (ViewMode) -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(8.dp).clip(CircleShape).background(AccentBrush))
             Spacer(Modifier.width(8.dp))
-            Text("SILICONPULSE", style = MaterialTheme.typography.labelSmall, color = Cyan)
+            Text("SiliconPulse", style = MaterialTheme.typography.titleSmall, color = Cyan)
             Spacer(Modifier.weight(1f))
             DeviceChip()
         }
         Spacer(Modifier.height(10.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(if (mode == ViewMode.SIMPLE) "Tu telefono" else tab.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
-                Text(if (mode == ViewMode.SIMPLE) "Resumen facil de entender" else tab.caption, style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            }
-            ModeSwitch(mode, onMode)
-        }
+        Text(if (mode == ViewMode.SIMPLE) "Tu telefono" else tab.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+        Text(if (mode == ViewMode.SIMPLE) "Resumen facil de entender" else tab.caption, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+        Spacer(Modifier.height(12.dp))
+        ModeSwitch(mode, onMode)
     }
 }
 
-/** Conmutador Sencilla / Pro, estilo segmentado. */
+/** Conmutador Sencilla / Pro: control segmentado a todo el ancho, imposible de pasar por alto. */
 @Composable
 private fun ModeSwitch(mode: ViewMode, onMode: (ViewMode) -> Unit) {
     Row(
         Modifier
-            .clip(RoundedCornerShape(50))
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .background(Panel)
-            .border(1.dp, Outline, RoundedCornerShape(50))
-            .padding(3.dp),
+            .border(1.dp, Outline, RoundedCornerShape(16.dp))
+            .padding(4.dp),
     ) {
         ViewMode.entries.forEach { m ->
             val selected = m == mode
             Box(
                 Modifier
-                    .clip(RoundedCornerShape(50))
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(if (selected) Cyan else Color.Transparent)
                     .clickable { onMode(m) }
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .padding(vertical = 11.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    if (m == ViewMode.SIMPLE) "Sencilla" else "Pro",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (selected) Ink else TextMuted,
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        if (m == ViewMode.SIMPLE) "Vista sencilla" else "Vista Pro",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (selected) Ink else MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        if (m == ViewMode.SIMPLE) "Para cualquiera" else "Para tecnicos",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (selected) Ink.copy(alpha = 0.7f) else TextMuted,
+                    )
+                }
             }
         }
     }
@@ -203,8 +211,8 @@ private fun DeviceChip() {
         Spacer(Modifier.width(6.dp))
         Text(
             "${Build.MODEL} · Android ${Build.VERSION.RELEASE}",
-            style = MaterialTheme.typography.labelSmall,
-            color = TextMuted,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
         )
     }

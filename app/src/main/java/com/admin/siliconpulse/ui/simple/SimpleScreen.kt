@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -103,7 +104,7 @@ fun SimpleScreen(vm: SimpleViewModel) {
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "Analizado a las ${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(r.generatedAtEpochMs))} · ${r.totalApps} apps revisadas",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = TextMuted,
                     )
                 }
@@ -135,7 +136,7 @@ fun SimpleScreen(vm: SimpleViewModel) {
                 }
             }
             if (r.suspiciousApps.isNotEmpty()) {
-                item { Text("APPS A REVISAR", style = MaterialTheme.typography.labelSmall, color = TextFaint, modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
+                item { Text("Apps a revisar", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
                 items(r.suspiciousApps, key = { it.packageName }) { app -> AppCard(app, vm) }
             }
         }
@@ -166,7 +167,7 @@ private fun LiveTile(label: String, value: String, alert: Boolean, modifier: Mod
         Row(verticalAlignment = Alignment.CenterVertically) {
             PulseDot(c, alert)
             Spacer(Modifier.width(6.dp))
-            Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+            Text(label, style = MaterialTheme.typography.bodySmall, color = TextMuted)
         }
         Spacer(Modifier.height(4.dp))
         Text(value, style = MaterialTheme.typography.titleSmall, color = c, maxLines = 1)
@@ -186,27 +187,68 @@ private fun PulseDot(color: Color, pulse: Boolean) {
 
 @Composable
 private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> Unit) {
-    val t = rememberInfiniteTransition(label = "sheen")
-    val shift by t.animateFloat(0f, 1f, infiniteRepeatable(tween(2200, easing = LinearEasing)), label = "s")
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(Brush.linearGradient(listOf(Cyan, Violet), start = androidx.compose.ui.geometry.Offset(shift * 600f, 0f), end = androidx.compose.ui.geometry.Offset(shift * 600f + 700f, 300f)))
-            .clickable(enabled = !analyzing, onClick = onClick)
-            .padding(horizontal = 22.dp, vertical = 22.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (analyzing) CircularProgressIndicator(Modifier.size(22.dp), color = Ink, strokeWidth = 2.5.dp)
-            else Box(Modifier.size(22.dp).clip(CircleShape).background(Ink.copy(alpha = 0.25f)), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(10.dp).clip(CircleShape).background(Ink))
+    val t = rememberInfiniteTransition(label = "scan")
+    // Anillos que se expanden desde el disco (como un radar).
+    val ring1 by t.animateFloat(0f, 1f, infiniteRepeatable(tween(2200, easing = LinearEasing)), label = "r1")
+    val ring2 by t.animateFloat(0f, 1f, infiniteRepeatable(tween(2200, delayMillis = 1100, easing = LinearEasing)), label = "r2")
+    // Barrido que gira mientras analiza.
+    val sweep by t.animateFloat(0f, 360f, infiniteRepeatable(tween(1400, easing = LinearEasing)), label = "sweep")
+    // Respiracion suave del disco en reposo.
+    val breath by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "breath")
+
+    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(260.dp), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize()) {
+                val c = center
+                val base = size.minDimension / 2 * 0.62f
+                fun ring(p: Float) {
+                    if (p <= 0f) return
+                    val r = base + (size.minDimension / 2 - base) * p
+                    drawCircle(Cyan.copy(alpha = (1f - p) * 0.45f), radius = r, center = c, style = Stroke(width = 3f))
+                }
+                ring(ring1); ring(ring2)
+                // Halo
+                drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha = 0.35f), Color.Transparent), center = c, radius = base * 1.35f), radius = base * 1.35f, center = c)
+                if (analyzing) {
+                    drawArc(
+                        brush = Brush.sweepGradient(listOf(Color.Transparent, Cyan, Violet), center = c),
+                        startAngle = sweep,
+                        sweepAngle = 300f,
+                        useCenter = false,
+                        topLeft = androidx.compose.ui.geometry.Offset(c.x - base - 14f, c.y - base - 14f),
+                        size = androidx.compose.ui.geometry.Size((base + 14f) * 2, (base + 14f) * 2),
+                        style = Stroke(width = 8f, cap = androidx.compose.ui.graphics.StrokeCap.Round),
+                    )
+                }
             }
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(if (analyzing) "Analizando…" else "Analizar mi telefono", style = MaterialTheme.typography.titleLarge, color = Ink, fontWeight = FontWeight.Bold)
-                Text(progress ?: "Camara, microfono, ubicacion, apps sospechosas y bateria. Tarda unos segundos.", style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.75f))
+            val scale = if (analyzing) 1f else breath
+            Box(
+                Modifier
+                    .size((170 * scale).dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Cyan, Violet)))
+                    .clickable(enabled = !analyzing, onClick = onClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (analyzing) {
+                        CircularProgressIndicator(Modifier.size(34.dp), color = Ink, strokeWidth = 3.dp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("Analizando", style = MaterialTheme.typography.titleSmall, color = Ink, fontWeight = FontWeight.Bold)
+                    } else {
+                        Text("ANALIZAR", style = MaterialTheme.typography.titleLarge, color = Ink, fontWeight = FontWeight.Black)
+                        Text("mi telefono", style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.8f))
+                    }
+                }
             }
         }
+        Text(
+            progress ?: "Toca para revisar camara, microfono, ubicacion, apps sospechosas y bateria",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextMuted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
     }
 }
 
@@ -214,7 +256,7 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
 private fun FindingCard(f: SimpleFinding, vm: SimpleViewModel) {
     val c = verdictColor(f.verdict)
     Panel(f.title, accent = c, trailing = { StatusPill(verdictLabel(f.verdict), alert = f.verdict == Verdict.ALERT, neutral = f.verdict == Verdict.OK) }) {
-        Text(f.detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(f.detail, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         if (f.apps.isNotEmpty()) {
             Hairline()
             f.apps.forEach { app -> AppRow(app, vm) }
@@ -281,7 +323,7 @@ private fun Tag(text: String, color: Color) {
 private fun Bullet(text: String) {
     Row(Modifier.padding(vertical = 3.dp)) {
         Text("•", color = TextMuted, modifier = Modifier.width(14.dp))
-        Text(text, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
     }
 }
 

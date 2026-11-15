@@ -77,8 +77,8 @@ fun Panel(
             )
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted)
             }
             trailing?.invoke()
         }
@@ -95,10 +95,10 @@ fun KeyValue(key: String, value: String?, valueColor: Color = MaterialTheme.colo
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(key, style = MaterialTheme.typography.bodyMedium, color = TextMuted, modifier = Modifier.weight(1f))
+        Text(key, style = MaterialTheme.typography.bodyLarge, color = TextMuted, modifier = Modifier.weight(1f))
         Text(
             value ?: "—",
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelLarge,
             color = if (value == null) TextFaint else valueColor,
             modifier = Modifier.weight(1.3f),
             textAlign = TextAlign.End,
@@ -206,8 +206,8 @@ fun Dot(color: Color) {
 fun Note(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.bodySmall,
-        color = TextFaint,
+        style = MaterialTheme.typography.bodyMedium,
+        color = TextMuted,
         modifier = Modifier.padding(top = 8.dp),
     )
 }
