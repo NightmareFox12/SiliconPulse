@@ -154,12 +154,12 @@ fun MetricTile(
             .clip(RoundedCornerShape(16.dp))
             .background(color.copy(alpha = 0.08f))
             .border(1.dp, color.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
     ) {
         Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = TextMuted)
         Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp, lineHeight = 26.sp), color = color, maxLines = 1, softWrap = false)
+            Text(value, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp, lineHeight = 24.sp), color = color, maxLines = 1, softWrap = false)
             if (unit.isNotEmpty()) {
                 Spacer(Modifier.width(3.dp))
                 Text(unit, style = MaterialTheme.typography.labelSmall, color = TextMuted, modifier = Modifier.padding(bottom = 4.dp), maxLines = 1, softWrap = false)
@@ -223,7 +223,7 @@ fun Gauge(
     label: String,
     color: Color = Cyan,
     modifier: Modifier = Modifier,
-    size: Dp = 116.dp,
+    size: Dp = 108.dp,
     unit: String = "",
 ) {
     val animated by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(600), label = "gauge")

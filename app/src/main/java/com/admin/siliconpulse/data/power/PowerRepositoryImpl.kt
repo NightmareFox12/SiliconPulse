@@ -116,10 +116,16 @@ class PowerRepositoryImpl(private val context: Context) : PowerRepository {
     }
 
     /**
-     * Algunos OEM reportan µA y otros mA en CURRENT_NOW. Heuristica: si |valor| > 20000
-     * asumimos µA. El signo lo mantenemos tal cual (positivo = entra carga).
+     * Algunos OEM reportan µA y otros mA en CURRENT_NOW. En cuanto vemos un |valor| > 20000
+     * fijamos µA para toda la sesion: asi una lectura pequena (p. ej. -11400 µA en reposo)
+     * no se interpreta como -11400 mA. El signo se mantiene (positivo = entra carga).
      */
-    private fun normalizeCurrentMa(raw: Int): Float = if (abs(raw) > 20_000) raw / 1000f else raw.toFloat()
+    @Volatile private var currentIsMicroAmps = false
+
+    private fun normalizeCurrentMa(raw: Int): Float {
+        if (abs(raw) > 20_000) currentIsMicroAmps = true
+        return if (currentIsMicroAmps) raw / 1000f else raw.toFloat()
+    }
 
     private fun readThermal(): ThermalState {
         val code = powerManager.currentThermalStatus

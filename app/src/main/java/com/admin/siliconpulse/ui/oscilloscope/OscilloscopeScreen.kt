@@ -3,17 +3,18 @@ package com.admin.siliconpulse.ui.oscilloscope
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,11 +30,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.admin.siliconpulse.domain.model.SamplingRate
 import com.admin.siliconpulse.domain.model.SensorChannel
 import com.admin.siliconpulse.ui.components.Dot
-import com.admin.siliconpulse.ui.theme.Mono
+import com.admin.siliconpulse.ui.components.Hairline
 import com.admin.siliconpulse.ui.components.KeyValue
 import com.admin.siliconpulse.ui.components.Note
 import com.admin.siliconpulse.ui.components.Panel
+import com.admin.siliconpulse.ui.components.StatusPill
+import com.admin.siliconpulse.ui.theme.Cyan
+import com.admin.siliconpulse.ui.theme.Ink
+import com.admin.siliconpulse.ui.theme.Mono
+import com.admin.siliconpulse.ui.theme.Outline
 import com.admin.siliconpulse.ui.theme.TextMuted
+import com.admin.siliconpulse.ui.theme.Violet
 
 @Composable
 fun OscilloscopeScreen(vm: OscilloscopeViewModel) {
@@ -42,7 +49,7 @@ fun OscilloscopeScreen(vm: OscilloscopeViewModel) {
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
@@ -54,6 +61,8 @@ fun OscilloscopeScreen(vm: OscilloscopeViewModel) {
                         onClick = { if (available) vm.select(ch) },
                         label = { Text(ch.label) },
                         enabled = available,
+                        colors = chipColors(),
+                        border = FilterChipDefaults.filterChipBorder(enabled = available, selected = ui.channel == ch, borderColor = Outline, selectedBorderColor = Cyan),
                     )
                 }
             }
@@ -61,40 +70,51 @@ fun OscilloscopeScreen(vm: OscilloscopeViewModel) {
         item {
             Panel(
                 title = ui.channel.label,
+                subtitle = "${ui.channel.unit} · ${ui.channel.axes} ${if (ui.channel.axes == 1) "eje" else "ejes"}",
                 trailing = {
-                    TextButton(onClick = vm::togglePause) { Text(if (ui.paused) "Reanudar" else "Pausar") }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StatusPill("%.0f Hz".format(ui.sampleRateHz), alert = false, neutral = ui.paused)
+                        TextButton(onClick = vm::togglePause) { Text(if (ui.paused) "Reanudar" else "Pausar") }
+                    }
                 },
             ) {
                 OscilloscopeCanvas(buffer = vm.buffer, axes = ui.channel.axes, frame = vm.frame, unit = ui.channel.unit)
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 LiveValues(vm, ui)
-                Spacer(Modifier.height(8.dp))
+                Hairline()
                 Row(
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Tasa", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                    Text("TASA", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Spacer(Modifier.width(4.dp))
                     SamplingRate.entries.forEach { r ->
-                        FilterChip(selected = ui.rate == r, onClick = { vm.setRate(r) }, label = { Text(r.label, style = MaterialTheme.typography.labelSmall) })
+                        FilterChip(
+                            selected = ui.rate == r,
+                            onClick = { vm.setRate(r) },
+                            label = { Text(r.label, style = MaterialTheme.typography.labelSmall) },
+                            colors = chipColors(Violet),
+                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = ui.rate == r, borderColor = Outline, selectedBorderColor = Violet),
+                        )
                     }
                 }
                 ui.error?.let { Note("Error: $it") }
-                Note("Buffer de ${vm.buffer.capacity} muestras. Listener en hilo dedicado; redibujo limitado a 60 fps.")
             }
         }
         item {
             Panel(
-                title = "Sensores reportados por el HAL (${ui.sensors.size})",
-                trailing = { TextButton(onClick = { showSensorList = !showSensorList }) { Text(if (showSensorList) "Ocultar" else "Ver") } },
+                title = "Sensores del HAL",
+                subtitle = "${ui.sensors.size} reportados por el fabricante",
+                accent = Violet,
+                trailing = { TextButton(onClick = { showSensorList = !showSensorList }) { Text(if (showSensorList) "Ocultar" else "Ver lista") } },
             ) {
-                if (!showSensorList) Text("Lista completa con vendor, rango, resolucion y consumo.", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                if (!showSensorList) Text("Vendor, rango, resolucion, consumo y modo de reporte de cada sensor.", style = MaterialTheme.typography.bodySmall, color = TextMuted)
             }
         }
         if (showSensorList) {
             items(ui.sensors) { s ->
-                Panel(title = s.typeName.removePrefix("android.sensor.")) {
-                    KeyValue("Nombre", s.name)
+                Panel(title = s.name, subtitle = s.typeName.removePrefix("android.sensor."), accent = Violet) {
                     KeyValue("Vendor", s.vendor)
                     KeyValue("Rango max", "%.3g".format(s.maxRange))
                     KeyValue("Resolucion", "%.3g".format(s.resolution))
@@ -108,36 +128,40 @@ fun OscilloscopeScreen(vm: OscilloscopeViewModel) {
 }
 
 @Composable
+private fun chipColors(accent: androidx.compose.ui.graphics.Color = Cyan) = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = accent.copy(alpha = 0.18f),
+    selectedLabelColor = accent,
+    containerColor = Ink.copy(alpha = 0.4f),
+    labelColor = TextMuted,
+    disabledLabelColor = TextMuted.copy(alpha = 0.35f),
+)
+
+@Composable
 private fun LiveValues(vm: OscilloscopeViewModel, ui: OscilloscopeUiState) {
     @Suppress("UNUSED_EXPRESSION") vm.frame
     val b = vm.buffer
     val axes = ui.channel.axes
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            AxisValue("X", b.lastX, 0, Modifier.weight(1.1f))
-            if (axes > 1) AxisValue("Y", b.lastY, 1, Modifier.weight(1.1f))
-            if (axes > 2) AxisValue("Z", b.lastZ, 2, Modifier.weight(1.1f))
-            Column(Modifier.weight(0.7f)) {
-                Text("Hz", style = MaterialTheme.typography.bodySmall, color = TextMuted)
-                Text("%.0f".format(ui.sampleRateHz), style = MaterialTheme.typography.titleMedium, fontFamily = Mono, maxLines = 1)
+            AxisValue("X", b.lastX, 0, Modifier.weight(1f))
+            if (axes > 1) AxisValue("Y", b.lastY, 1, Modifier.weight(1f))
+            if (axes > 2) AxisValue("Z", b.lastZ, 2, Modifier.weight(1f))
+        }
+        when (ui.channel) {
+            SensorChannel.PRESSURE -> if (b.lastX > 0f) {
+                val alt = 44330f * (1f - Math.pow((b.lastX / 1013.25f).toDouble(), 0.1903).toFloat())
+                KeyValue("Altitud estimada (ISA)", "%.1f m".format(alt))
             }
+            SensorChannel.MAGNETOMETER -> {
+                val mag = kotlin.math.sqrt(b.lastX * b.lastX + b.lastY * b.lastY + b.lastZ * b.lastZ)
+                KeyValue("|B| total", "%.1f µT".format(mag))
+            }
+            SensorChannel.ACCELEROMETER -> {
+                val g = kotlin.math.sqrt(b.lastX * b.lastX + b.lastY * b.lastY + b.lastZ * b.lastZ) / 9.80665f
+                KeyValue("|a| en g", "%.3f g".format(g))
+            }
+            else -> Unit
         }
-        if (ui.channel == SensorChannel.PRESSURE && b.lastX > 0f) {
-            val alt = 44330f * (1f - Math.pow((b.lastX / 1013.25f).toDouble(), 0.1903).toFloat())
-            Spacer(Modifier.height(6.dp))
-            KeyValue("Altitud estimada (ISA)", "%.1f m".format(alt))
-        }
-        if (ui.channel == SensorChannel.MAGNETOMETER) {
-            val mag = kotlin.math.sqrt(b.lastX * b.lastX + b.lastY * b.lastY + b.lastZ * b.lastZ)
-            Spacer(Modifier.height(6.dp))
-            KeyValue("|B| total", "%.1f µT".format(mag))
-        }
-        if (ui.channel == SensorChannel.ACCELEROMETER) {
-            val g = kotlin.math.sqrt(b.lastX * b.lastX + b.lastY * b.lastY + b.lastZ * b.lastZ) / 9.80665f
-            Spacer(Modifier.height(6.dp))
-            KeyValue("|a| en g", "%.3f g".format(g))
-        }
-        Spacer(Modifier.height(4.dp))
         KeyValue("Precision reportada", when (ui.accuracy) { 3 -> "alta"; 2 -> "media"; 1 -> "baja"; 0 -> "no confiable"; else -> "n/a" })
     }
 }
@@ -147,12 +171,12 @@ private fun AxisValue(label: String, value: Float, axis: Int, modifier: Modifier
     Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Dot(axisColor(axis))
-            Spacer(Modifier.width(4.dp))
-            Text(label, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Spacer(Modifier.width(5.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = TextMuted)
         }
         Text(
             "%.2f".format(value),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontFamily = Mono,
             color = axisColor(axis),
             maxLines = 1,

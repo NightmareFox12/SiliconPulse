@@ -10,11 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
@@ -22,11 +23,15 @@ import com.admin.siliconpulse.ui.theme.AxisX
 import com.admin.siliconpulse.ui.theme.AxisY
 import com.admin.siliconpulse.ui.theme.AxisZ
 import com.admin.siliconpulse.ui.theme.Ink
+import com.admin.siliconpulse.ui.theme.InkDeep
 import com.admin.siliconpulse.ui.theme.Outline
 
 /**
  * Grafica oscilografica. `frame` es un contador que el ViewModel incrementa una vez
  * por frame de pantalla; leerlo aqui es lo que dispara el redibujado.
+ *
+ * Estetica: sin caja, sin rejilla vertical. Cuatro guias horizontales punteadas,
+ * trazas con halo suave y un area degradada bajo la primera traza cuando hay un solo eje.
  */
 @Composable
 fun OscilloscopeCanvas(
@@ -37,45 +42,47 @@ fun OscilloscopeCanvas(
     modifier: Modifier = Modifier,
 ) {
     val paths = remember { Array(3) { Path() } }
+    val area = remember { Path() }
     val textPaint = remember {
         android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(200, 139, 152, 165)
-            textSize = 26f
+            color = android.graphics.Color.argb(170, 138, 150, 179)
+            textSize = 22f
             typeface = android.graphics.Typeface.MONOSPACE
             isAntiAlias = true
+            textAlign = android.graphics.Paint.Align.RIGHT
         }
     }
+    val dash = remember { PathEffect.dashPathEffect(floatArrayOf(6f, 10f)) }
 
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(240.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(Ink),
+            .height(230.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Brush.verticalGradient(listOf(InkDeep, Ink))),
     ) {
-        @Suppress("UNUSED_EXPRESSION") frame // dependencia explicita para recomponer
+        @Suppress("UNUSED_EXPRESSION") frame
 
         val w = size.width
         val h = size.height
-        val leftGutter = 92f
-        val plotW = w - leftGutter - 8f
-
-        drawGrid(leftGutter, plotW)
+        val padTop = 18f
+        val padBottom = 14f
+        val leftGutter = 98f
+        val plotW = w - leftGutter - 14f
+        val plotH = h - padTop - padBottom
 
         val (min, max) = buffer.range(axes)
         val span = max - min
-        fun yOf(v: Float) = h - ((v - min) / span) * h
+        fun yOf(v: Float) = padTop + plotH - ((v - min) / span) * plotH
 
-        // Etiquetas de escala
+        // Guias horizontales + etiquetas
         val nc = drawContext.canvas.nativeCanvas
         for (i in 0..4) {
             val v = max - span * i / 4f
-            val yy = yOf(v).coerceIn(24f, h - 6f)
-            nc.drawText(formatTick(v), 6f, yy, textPaint)
+            val y = yOf(v)
+            drawLine(Outline.copy(alpha = 0.7f), Offset(leftGutter, y), Offset(leftGutter + plotW, y), strokeWidth = 1f, pathEffect = dash)
+            nc.drawText(formatTick(v), leftGutter - 12f, y + 8f, textPaint)
         }
-        // Unidad en la esquina superior derecha del area de trazado, fuera de los ticks.
-        val unitW = textPaint.measureText(unit)
-        nc.drawText(unit, w - unitW - 10f, 26f, textPaint)
 
         val n = buffer.size
         if (n < 2) return@Canvas
@@ -91,32 +98,24 @@ fun OscilloscopeCanvas(
                 val py = yOf(v)
                 if (i == 0) p.moveTo(px, py) else p.lineTo(px, py)
             }
-            drawPath(
-                p,
-                color = axisColor(axis),
-                style = Stroke(width = 2.5f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
+            val c = axisColor(axis)
+            if (axes == 1) {
+                area.reset()
+                area.addPath(p)
+                area.lineTo(xStart + (n - 1) * step, padTop + plotH)
+                area.lineTo(xStart, padTop + plotH)
+                area.close()
+                drawPath(area, Brush.verticalGradient(listOf(c.copy(alpha = 0.30f), c.copy(alpha = 0f)), startY = padTop, endY = padTop + plotH))
+            }
+            drawPath(p, c.copy(alpha = 0.22f), style = Stroke(width = 7f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            drawPath(p, c, style = Stroke(width = 2.2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
 
-        // Cursor en el ultimo punto
-        val lastV = buffer.xAt(n - 1)
-        drawCircle(axisColor(0), radius = 4f, center = Offset(xStart + (n - 1) * step, yOf(lastV)))
+        // Cursor en el ultimo punto del primer eje
+        val last = Offset(xStart + (n - 1) * step, yOf(buffer.xAt(n - 1)))
+        drawCircle(axisColor(0).copy(alpha = 0.25f), radius = 10f, center = last)
+        drawCircle(axisColor(0), radius = 3.5f, center = last)
     }
-}
-
-private fun DrawScope.drawGrid(left: Float, plotW: Float) {
-    val h = size.height
-    val cols = 10
-    val rows = 4
-    for (i in 0..cols) {
-        val x = left + plotW * i / cols
-        drawLine(Outline, Offset(x, 0f), Offset(x, h), strokeWidth = 1f)
-    }
-    for (i in 0..rows) {
-        val y = h * i / rows
-        drawLine(Outline, Offset(left, y), Offset(left + plotW, y), strokeWidth = 1f)
-    }
-    drawLine(Outline.copy(alpha = 0.8f), Offset(left, 0f), Offset(left, h), strokeWidth = 2f)
 }
 
 fun axisColor(axis: Int): Color = when (axis) { 0 -> AxisX; 1 -> AxisY; else -> AxisZ }
