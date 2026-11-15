@@ -136,7 +136,7 @@ fun ExportScreen(vm: ExportViewModel) {
         if (uri != null) vm.writeTo(uri, ctx.contentResolver)
     }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Panel("Reporte de diagnostico") {
                 Text(

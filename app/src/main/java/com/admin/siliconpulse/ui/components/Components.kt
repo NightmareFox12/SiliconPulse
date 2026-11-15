@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.admin.siliconpulse.ui.theme.Cyan
 import com.admin.siliconpulse.ui.theme.Mint
 import com.admin.siliconpulse.ui.theme.Mono
@@ -158,10 +159,10 @@ fun MetricTile(
         Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = TextMuted)
         Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, color = color, maxLines = 1, softWrap = false)
+            Text(value, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp, lineHeight = 26.sp), color = color, maxLines = 1, softWrap = false)
             if (unit.isNotEmpty()) {
-                Spacer(Modifier.width(4.dp))
-                Text(unit, style = MaterialTheme.typography.labelMedium, color = TextMuted, modifier = Modifier.padding(bottom = 4.dp))
+                Spacer(Modifier.width(3.dp))
+                Text(unit, style = MaterialTheme.typography.labelSmall, color = TextMuted, modifier = Modifier.padding(bottom = 4.dp), maxLines = 1, softWrap = false)
             }
         }
         if (footer != null) {
@@ -284,9 +285,10 @@ fun Sparkline(
 ) {
     Canvas(modifier.fillMaxWidth().height(height)) {
         if (values.size < 2) return@Canvas
-        val min = minOverride ?: values.min()
-        val max = maxOverride ?: values.max()
-        val span = (max - min).takeIf { it > 1e-4f } ?: 1f
+        var min = minOverride ?: values.min()
+        var max = maxOverride ?: values.max()
+        if (max - min < 1e-3f) { min -= 0.5f; max += 0.5f }
+        val span = max - min
         val w = size.width
         val h = size.height
         val stepX = w / (values.size - 1)
