@@ -52,6 +52,7 @@ class PrivacyRepositoryImpl(private val context: Context) : PrivacyRepository {
         // --- Microfono: AudioManager reporta todas las grabaciones activas del sistema.
         val recordingCallback = object : AudioManager.AudioRecordingCallback() {
             override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
+                android.util.Log.i("SiliconPulse", "active recordings: ${configs.size}")
                 state = state.copy(microphone = readMicrophone(configs).copy(appOpsPackages = state.microphone.appOpsPackages))
                 push()
             }
@@ -68,6 +69,7 @@ class PrivacyRepositoryImpl(private val context: Context) : PrivacyRepository {
             }
 
             override fun onCameraUnavailable(cameraId: String) {
+                android.util.Log.i("SiliconPulse", "camera $cameraId unavailable (in use by some app)")
                 unavailable.add(cameraId)
                 state = state.copy(camera = state.camera.copy(unavailableIds = unavailable.toList()))
                 push()
