@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,6 +42,9 @@ import com.admin.siliconpulse.ui.components.KeyValue
 import com.admin.siliconpulse.ui.components.Note
 import com.admin.siliconpulse.ui.components.Panel
 import com.admin.siliconpulse.ui.theme.TextMuted
+import com.admin.siliconpulse.ui.theme.Mint
+import com.admin.siliconpulse.ui.theme.Outline
+import com.admin.siliconpulse.ui.theme.Violet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -58,6 +63,7 @@ data class ExportUiState(
     val building: Boolean = false,
     val report: DiagnosticReport? = null,
     val json: String? = null,
+    val text: String? = null,
     val message: String? = null,
 )
 
@@ -94,7 +100,8 @@ class ExportViewModel(
                         power = powerDeferred.await() ?: com.admin.siliconpulse.domain.model.PowerState(),
                     )
                     val json = withContext(Dispatchers.Default) { exporter.toJson(report) }
-                    _ui.update { it.copy(building = false, report = report, json = json, message = "Snapshot listo: ${json.length / 1024} KB") }
+                    val text = exporter.toPlainText(report)
+                    _ui.update { it.copy(building = false, report = report, json = json, text = text, message = "Informe listo. Texto de ${text.lines().size} lineas, JSON de ${json.length / 1024} KB.") }
                 }
             }.onFailure { e ->
                 _ui.update { it.copy(building = false, message = "Error: ${e.message}") }
@@ -138,32 +145,55 @@ fun ExportScreen(vm: ExportViewModel) {
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Panel("Reporte de diagnostico") {
+            Panel("Informe del telefono", subtitle = "para compartir o para un tecnico") {
                 Text(
-                    "Empaqueta en un JSON: dispositivo, lista de sensores del HAL, una muestra real de cada canal, " +
-                        "estado de microfono/camara/ubicacion, radios y energia (incluida la ventana de deep sleep).",
+                    "Captura el estado actual y genera un resumen en texto normal, listo para pegar en WhatsApp. " +
+                        "Si un tecnico o una IA lo necesita, tambien puedes guardar el JSON completo.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted,
                 )
                 Spacer(Modifier.height(12.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Button(onClick = vm::buildSnapshot, enabled = !ui.building) {
-                        if (ui.building) CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp) else Text("Capturar snapshot")
+                        if (ui.building) CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp) else Text("Capturar estado")
                     }
-                    OutlinedButton(onClick = { saveLauncher.launch(vm.suggestedName()) }, enabled = ui.json != null) { Text("Guardar .json") }
                     OutlinedButton(
                         onClick = {
-                            val send = Intent(Intent.ACTION_SEND).apply {
-                                type = "application/json"
-                                putExtra(Intent.EXTRA_SUBJECT, vm.suggestedName())
-                                putExtra(Intent.EXTRA_TEXT, ui.json)
-                            }
-                            ctx.startActivity(Intent.createChooser(send, "Compartir reporte"))
+                            val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_SUBJECT, "Informe SiliconPulse"); putExtra(Intent.EXTRA_TEXT, ui.text) }
+                            ctx.startActivity(Intent.createChooser(send, "Compartir informe"))
                         },
-                        enabled = ui.json != null,
-                    ) { Text("Compartir") }
+                        enabled = ui.text != null,
+                        colors = secondaryButtonColors(),
+                        border = secondaryBorder(ui.text != null),
+                    ) { Text("Compartir resumen") }
                 }
                 ui.message?.let { Note(it) }
+            }
+        }
+        ui.text?.let { t ->
+            item {
+                Panel("Resumen en texto", subtitle = "esto es lo que se comparte", accent = Mint) {
+                    Text(t, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
+        item {
+            Panel("Opcion tecnica: JSON completo", subtitle = "sensores, radios, energia y privacidad en crudo", accent = Violet) {
+                Text(
+                    "Un archivo legible por maquina con todos los valores. Util para comparar dos capturas, enviarlo a soporte o pegarlo en una IA para que lo interprete.",
+                    style = MaterialTheme.typography.bodyMedium, color = TextMuted,
+                )
+                Spacer(Modifier.height(10.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    OutlinedButton(onClick = { saveLauncher.launch(vm.suggestedName()) }, enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null)) { Text("Guardar .json") }
+                    OutlinedButton(
+                        onClick = {
+                            val send = Intent(Intent.ACTION_SEND).apply { type = "application/json"; putExtra(Intent.EXTRA_SUBJECT, vm.suggestedName()); putExtra(Intent.EXTRA_TEXT, ui.json) }
+                            ctx.startActivity(Intent.createChooser(send, "Compartir JSON"))
+                        },
+                        enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null),
+                    ) { Text("Compartir JSON") }
+                }
             }
         }
         ui.report?.let { r ->
@@ -185,16 +215,16 @@ fun ExportScreen(vm: ExportViewModel) {
                     }
                 }
             }
-            item {
-                Panel("Vista previa JSON") {
-                    Text(
-                        ui.json?.take(4000) ?: "",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
-                    )
-                    if ((ui.json?.length ?: 0) > 4000) Note("… truncado en la vista previa; el archivo completo se guarda integro.")
-                }
-            }
         }
     }
 }
+
+/** Botones secundarios con estado deshabilitado visible en claro y en oscuro. */
+@Composable
+private fun secondaryButtonColors() = ButtonDefaults.outlinedButtonColors(
+    contentColor = MaterialTheme.colorScheme.primary,
+    disabledContentColor = TextMuted,
+)
+
+@Composable
+private fun secondaryBorder(enabled: Boolean) = BorderStroke(1.dp, if (enabled) MaterialTheme.colorScheme.primary else Outline)

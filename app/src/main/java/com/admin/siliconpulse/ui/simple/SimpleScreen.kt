@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -198,6 +199,7 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
     // Respiracion suave del disco en reposo.
     val breath by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "breath")
 
+    val dark = com.admin.siliconpulse.ui.theme.SPTheme.palette.isDark
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(300.dp), contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
@@ -209,8 +211,8 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
                     drawCircle(Cyan.copy(alpha = (1f - p) * 0.45f), radius = r, center = c, style = Stroke(width = 3f))
                 }
                 ring(ring1); ring(ring2)
-                // Halo
-                drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha = 0.35f), Color.Transparent), center = c, radius = base * 1.35f), radius = base * 1.35f, center = c)
+                // Halo: solo en oscuro. Sobre blanco parece una mancha, no una luz.
+                if (dark) drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha = 0.35f), Color.Transparent), center = c, radius = base * 1.35f), radius = base * 1.35f, center = c)
                 if (analyzing) {
                     drawArc(
                         brush = Brush.sweepGradient(listOf(Color.Transparent, Cyan, Mint), center = c),
@@ -228,8 +230,9 @@ private fun AnalyzeButton(analyzing: Boolean, progress: String?, onClick: () -> 
             Box(
                 Modifier
                     .size((204 * scale).dp)
+                    .then(if (dark) Modifier else Modifier.shadow(18.dp, CircleShape, ambientColor = Cyan.copy(alpha = 0.35f), spotColor = Cyan.copy(alpha = 0.35f)))
                     .clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(Cyan.copy(alpha = 0.22f), PanelHigh, Panel)))
+                    .background(if (dark) Brush.radialGradient(listOf(Cyan.copy(alpha = 0.22f), PanelHigh, Panel)) else Brush.linearGradient(listOf(Panel, Panel)))
                     .border(2.dp, Brush.sweepGradient(listOf(Cyan, Mint, Cyan.copy(alpha = 0.3f), Cyan)), CircleShape)
                     .clickable(enabled = !analyzing, onClick = onClick),
                 contentAlignment = Alignment.Center,

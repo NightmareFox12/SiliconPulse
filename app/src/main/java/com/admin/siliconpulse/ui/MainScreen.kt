@@ -84,7 +84,7 @@ enum class Tab(val label: String, val title: String, val caption: String, val ic
     PRIVACY("Privacidad", "Auditoria", "Mic · Camara · Ubicacion", Icons.Filled.Lock),
     RADIOS("Radios", "Radios", "Celular · Wi-Fi · Bluetooth", Icons.Filled.Phone),
     POWER("Energia", "Energia", "Bateria · Termico · Deep sleep", Icons.Filled.Settings),
-    EXPORT("Exportar", "Diagnostico", "Snapshot JSON del sistema", Icons.Filled.Share),
+    EXPORT("Exportar", "Informe", "Resumen para compartir o JSON tecnico", Icons.Filled.Share),
 }
 
 @Composable

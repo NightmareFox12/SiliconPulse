@@ -1,6 +1,8 @@
 package com.admin.siliconpulse.ui.privacy
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +47,7 @@ class PrivacyViewModel(repo: PrivacyRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PrivacyState())
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PrivacyScreen(vm: PrivacyViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
@@ -97,7 +100,7 @@ fun PrivacyScreen(vm: PrivacyViewModel) {
         }
         item {
             Panel("Cobertura del monitor", subtitle = "que API respalda cada indicador", accent = Violet) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatusPill("AudioManager", alert = false)
                     StatusPill("CameraManager", alert = false)
                     StatusPill("AppOps 3ros", alert = !s.appOpsWatchAvailable, neutral = !s.appOpsWatchAvailable)
