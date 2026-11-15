@@ -73,7 +73,9 @@ fun OscilloscopeCanvas(
             val yy = yOf(v).coerceIn(24f, h - 6f)
             nc.drawText(formatTick(v), 6f, yy, textPaint)
         }
-        nc.drawText(unit, 6f, h - 8f, textPaint)
+        // Unidad en la esquina superior derecha del area de trazado, fuera de los ticks.
+        val unitW = textPaint.measureText(unit)
+        nc.drawText(unit, w - unitW - 10f, 26f, textPaint)
 
         val n = buffer.size
         if (n < 2) return@Canvas

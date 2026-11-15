@@ -46,8 +46,8 @@ class RadioRepositoryImpl(private val context: Context) : RadioRepository {
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager?
 
     override fun observe(): Flow<RadioState> = callbackFlow {
-        @Volatile var wifiInfoFromCallback: WifiInfo? = null
-        @Volatile var wifiCaps: NetworkCapabilities? = null
+        var wifiInfoFromCallback: WifiInfo? = null
+        var wifiCaps: NetworkCapabilities? = null
 
         // En Android 12+ el SSID solo llega si el callback pide explicitamente info de ubicacion.
         val callback = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

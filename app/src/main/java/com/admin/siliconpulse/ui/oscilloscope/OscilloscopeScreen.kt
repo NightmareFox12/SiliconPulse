@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.admin.siliconpulse.domain.model.SamplingRate
 import com.admin.siliconpulse.domain.model.SensorChannel
-import com.admin.siliconpulse.ui.components.BigStat
 import com.admin.siliconpulse.ui.components.Dot
+import com.admin.siliconpulse.ui.theme.Mono
 import com.admin.siliconpulse.ui.components.KeyValue
 import com.admin.siliconpulse.ui.components.Note
 import com.admin.siliconpulse.ui.components.Panel
@@ -69,7 +69,11 @@ fun OscilloscopeScreen(vm: OscilloscopeViewModel) {
                 Spacer(Modifier.height(10.dp))
                 LiveValues(vm, ui)
                 Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text("Tasa", style = MaterialTheme.typography.bodySmall, color = TextMuted)
                     SamplingRate.entries.forEach { r ->
                         FilterChip(selected = ui.rate == r, onClick = { vm.setRate(r) }, label = { Text(r.label, style = MaterialTheme.typography.labelSmall) })
@@ -110,10 +114,13 @@ private fun LiveValues(vm: OscilloscopeViewModel, ui: OscilloscopeUiState) {
     val axes = ui.channel.axes
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            AxisValue("X", b.lastX, 0, Modifier.weight(1f))
-            if (axes > 1) AxisValue("Y", b.lastY, 1, Modifier.weight(1f))
-            if (axes > 2) AxisValue("Z", b.lastZ, 2, Modifier.weight(1f))
-            BigStat("Hz", "%.0f".format(ui.sampleRateHz), modifier = Modifier.weight(1f))
+            AxisValue("X", b.lastX, 0, Modifier.weight(1.1f))
+            if (axes > 1) AxisValue("Y", b.lastY, 1, Modifier.weight(1.1f))
+            if (axes > 2) AxisValue("Z", b.lastZ, 2, Modifier.weight(1.1f))
+            Column(Modifier.weight(0.7f)) {
+                Text("Hz", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                Text("%.0f".format(ui.sampleRateHz), style = MaterialTheme.typography.titleMedium, fontFamily = Mono, maxLines = 1)
+            }
         }
         if (ui.channel == SensorChannel.PRESSURE && b.lastX > 0f) {
             val alt = 44330f * (1f - Math.pow((b.lastX / 1013.25f).toDouble(), 0.1903).toFloat())
@@ -137,9 +144,19 @@ private fun LiveValues(vm: OscilloscopeViewModel, ui: OscilloscopeUiState) {
 
 @Composable
 private fun AxisValue(label: String, value: Float, axis: Int, modifier: Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Dot(axisColor(axis))
-        Spacer(Modifier.width(6.dp))
-        BigStat(label, "%.2f".format(value), color = axisColor(axis))
+    Column(modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Dot(axisColor(axis))
+            Spacer(Modifier.width(4.dp))
+            Text(label, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        }
+        Text(
+            "%.2f".format(value),
+            style = MaterialTheme.typography.titleMedium,
+            fontFamily = Mono,
+            color = axisColor(axis),
+            maxLines = 1,
+            softWrap = false,
+        )
     }
 }
