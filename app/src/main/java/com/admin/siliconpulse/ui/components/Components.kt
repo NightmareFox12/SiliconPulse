@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.admin.siliconpulse.ui.theme.Cyan
 import com.admin.siliconpulse.ui.theme.Mint
 import com.admin.siliconpulse.ui.theme.Mono
+import com.admin.siliconpulse.ui.theme.MonoValue
 import com.admin.siliconpulse.ui.theme.Outline
 import com.admin.siliconpulse.ui.theme.Panel
 import com.admin.siliconpulse.ui.theme.PanelBorderBrush
@@ -98,7 +99,7 @@ fun KeyValue(key: String, value: String?, valueColor: Color = MaterialTheme.colo
         Text(key, style = MaterialTheme.typography.bodyLarge, color = TextMuted, modifier = Modifier.weight(1f))
         Text(
             value ?: "—",
-            style = MaterialTheme.typography.labelLarge,
+            style = MonoValue,
             color = if (value == null) TextFaint else valueColor,
             modifier = Modifier.weight(1.3f),
             textAlign = TextAlign.End,

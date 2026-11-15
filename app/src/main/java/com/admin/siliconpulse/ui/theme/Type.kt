@@ -22,7 +22,10 @@ val Typography = Typography(
     bodyLarge = TextStyle(fontFamily = Sans, fontSize = 17.sp, lineHeight = 25.sp),
     bodyMedium = TextStyle(fontFamily = Sans, fontSize = 15.sp, lineHeight = 22.sp),
     bodySmall = TextStyle(fontFamily = Sans, fontSize = 13.5.sp, lineHeight = 19.sp),
-    labelLarge = TextStyle(fontFamily = Mono, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium),
+    labelLarge = TextStyle(fontFamily = Sans, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold),
     labelMedium = TextStyle(fontFamily = Mono, fontSize = 14.sp, lineHeight = 20.sp),
     labelSmall = TextStyle(fontFamily = Sans, fontSize = 12.5.sp, lineHeight = 16.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold),
 )
+
+/** Valores numericos en tablas clave/valor: mono, mismo cuerpo que el texto. */
+val MonoValue = TextStyle(fontFamily = Mono, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)

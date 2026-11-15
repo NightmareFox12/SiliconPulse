@@ -52,6 +52,37 @@ class ReportExporter(private val context: Context) {
 
     fun toJson(report: DiagnosticReport): String = json.encodeToString(DiagnosticReport.serializer(), report)
 
+    /** Resumen en espanol llano, pensado para pegar en WhatsApp o enviar a un tecnico. */
+    fun toPlainText(r: DiagnosticReport): String = buildString {
+        appendLine("SiliconPulse - Informe del telefono")
+        appendLine("Fecha: ${r.generatedAtIso}")
+        appendLine("Equipo: ${r.device.manufacturer} ${r.device.model} - Android ${r.device.androidVersion} (parche ${r.device.securityPatch})")
+        appendLine()
+        appendLine("PRIVACIDAD")
+        appendLine("- Camara: " + if (r.privacy.camera.inUse) "EN USO (${r.privacy.camera.unavailableIds.size} ocupada/s)" else "libre")
+        appendLine("- Microfono: " + if (r.privacy.microphone.inUse) "EN USO (${r.privacy.microphone.activeRecordings} grabacion/es: ${r.privacy.microphone.sources.joinToString()})" else "en silencio")
+        val loc = r.privacy.location
+        appendLine("- Ubicacion: " + (if (loc.locationEnabled) "encendida" else "apagada") + (loc.accuracyMeters?.let { " - precision %.0f m, %d satelites en fix".format(it, loc.satellitesUsedInFix) } ?: ""))
+        appendLine()
+        appendLine("RED")
+        appendLine("- Datos por: " + (r.radios.activeTransport ?: "ninguna") + if (r.radios.airplaneMode) " (modo avion)" else "")
+        val c = r.radios.cellular
+        if (c.available) appendLine("- Movil: " + listOfNotNull(c.operatorName, c.generation ?: c.networkTypeName, c.signalDbm?.let { "$it dBm" }).joinToString(" "))
+        val w = r.radios.wifi
+        if (w.connected) appendLine("- Wi-Fi: " + listOfNotNull(w.ssid ?: "(SSID oculto)", w.band, w.rssiDbm?.let { "$it dBm" }, w.linkSpeedMbps?.let { "$it Mbps" }).joinToString(" "))
+        appendLine("- Bluetooth: " + if (r.radios.bluetooth.enabled) "encendido, ${r.radios.bluetooth.devices.count { it.connected }} conectado/s" else "apagado")
+        appendLine()
+        appendLine("ENERGIA")
+        val b = r.power.battery
+        appendLine("- Bateria: ${b.levelPercent}% ${b.status}" + (b.temperatureC?.let { ", %.1f C".format(it) } ?: "") + (b.currentNowMa?.let { ", %.0f mA".format(it) } ?: "") + (b.health.takeIf { it != "unknown" }?.let { ", salud $it" } ?: ""))
+        appendLine("- Termico: ${r.power.thermal.status}" + (r.power.thermal.headroom?.let { " (headroom %.2f)".format(it) } ?: ""))
+        appendLine("- Deep sleep: " + (r.power.sleep.deepSleepPercentLastWindow?.let { "%.0f%% en la ultima ventana - ".format(it) } ?: "") + r.power.sleep.verdict)
+        appendLine("- Memoria libre: ${r.power.memory.availableMb} de ${r.power.memory.totalMb} MB")
+        appendLine()
+        appendLine("SENSORES: ${r.sensorsAvailable.size} reportados por el fabricante, ${r.sensorSnapshots.count { it.available && it.sampleRateHz > 0 }} canales con datos")
+        if (r.notes.isNotEmpty()) { appendLine(); appendLine("NOTAS"); r.notes.forEach { appendLine("- $it") } }
+    }
+
     fun suggestedFileName(): String =
         "siliconpulse_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".json"
 
