@@ -63,17 +63,17 @@ object AiTargets {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             val sendOk = runCatching { context.startActivity(send); true }.getOrDefault(false)
-            if (sendOk) return "Enviado a ${t.name}. Si no aparece el texto, pegalo: ya esta en el portapapeles."
+            if (sendOk) return "Enviado a ${t.name}. Si el texto no aparece, esta en el portapapeles para pegarlo."
             val launch = context.packageManager.getLaunchIntentForPackage(t.packageName)
             if (launch != null) {
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(launch)
-                return "${t.name} abierta. Pega el informe (ya esta en el portapapeles)."
+                return "${t.name} abierta. El informe esta en el portapapeles, listo para pegar."
             }
         }
         val url = t.prefillUrl?.let { String.format(it, Uri.encode(shortPrompt)) } ?: t.webUrl
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         return if (t.prefillUrl != null) "${t.name} abierta en el navegador con el resumen. El informe completo esta en el portapapeles."
-        else "${t.name} abierta en el navegador. Pega el informe (ya esta en el portapapeles)."
+        else "${t.name} abierta en el navegador. El informe esta en el portapapeles, listo para pegar."
     }
 }

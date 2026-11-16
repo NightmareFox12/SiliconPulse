@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Share
@@ -193,7 +194,7 @@ fun ExportScreen(vm: ExportViewModel) {
             Panel("Informe del telefono", subtitle = "para compartir o para un tecnico") {
                 Text(
                     "Captura el estado actual y genera un resumen en texto normal, listo para pegar en WhatsApp. " +
-                        "Si un tecnico o una IA lo necesita, tambien puedes guardar el JSON completo.",
+                        "Para un tecnico o una IA tambien esta disponible el JSON completo.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted,
                 )
@@ -224,7 +225,16 @@ fun ExportScreen(vm: ExportViewModel) {
             }
         }
         item {
-            AiExportCard(enabled = ui.report != null, onClick = { showAiDialog = true })
+            // Solo tiene sentido con un informe capturado: entra con animacion en ese momento.
+            androidx.compose.animation.AnimatedVisibility(
+                visible = ui.report != null,
+                enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(500)) +
+                    androidx.compose.animation.expandVertically(androidx.compose.animation.core.spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow)) +
+                    androidx.compose.animation.scaleIn(initialScale = 0.92f, animationSpec = androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy)),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically(),
+            ) {
+                AiExportCard(onClick = { showAiDialog = true })
+            }
         }
         item {
             Panel("Informe Markdown", subtitle = "resumen ejecutivo, tablas y detalle tecnico", accent = Sky) {
@@ -308,9 +318,9 @@ private fun secondaryButtonColors() = ButtonDefaults.outlinedButtonColors(
 @Composable
 private fun secondaryBorder(enabled: Boolean) = BorderStroke(1.dp, if (enabled) MaterialTheme.colorScheme.primary else Outline)
 
-/** Tarjeta destacada: exportar para IA. */
+/** Tarjeta destacada: exportar para IA. Solo se muestra cuando hay un informe capturado. */
 @Composable
-private fun AiExportCard(enabled: Boolean, onClick: () -> Unit) {
+private fun AiExportCard(onClick: () -> Unit) {
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
     androidx.compose.foundation.layout.Column(
         Modifier
@@ -318,23 +328,32 @@ private fun AiExportCard(enabled: Boolean, onClick: () -> Unit) {
             .clip(shape)
             .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Cyan.copy(alpha = 0.16f), Violet.copy(alpha = 0.16f))))
             .border(1.dp, androidx.compose.ui.graphics.Brush.linearGradient(listOf(Cyan, Violet)), shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(onClick = onClick)
             .padding(18.dp),
     ) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = Violet, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Exportar para IA", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text("Informe listo para una IA", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            if (enabled) "Elige Claude, ChatGPT, Gemini, DeepSeek, Copilot, Perplexity o Kimi. Te preparo el informe con instrucciones para que la IA lo interprete y te diga que hacer."
-            else "Primero pulsa Capturar estado. Luego podras mandarle el informe a la IA que prefieras.",
+            "El informe se envia con instrucciones para que la IA lo interprete y explique, en lenguaje claro, si hay algo preocupante y que hacer.",
             style = MaterialTheme.typography.bodyMedium, color = TextMuted,
         )
-        Spacer(Modifier.height(10.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            AiTargets.all.forEach { AiLogo(it, 32.dp) }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(-6.dp), modifier = Modifier.weight(1f)) {
+                AiTargets.all.forEach { AiLogo(it, 30.dp) }
+            }
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Violet, contentColor = androidx.compose.ui.graphics.Color.White),
+            ) {
+                Text("Elegir IA")
+                Spacer(Modifier.width(6.dp))
+                Icon(Icons.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }
@@ -372,7 +391,7 @@ private fun AiTargetDialog(enabled: Boolean, onDismiss: () -> Unit, onPick: (AiT
         title = { Text("Enviar informe a una IA", style = MaterialTheme.typography.titleMedium) },
         text = {
             androidx.compose.foundation.layout.Column {
-                Text("Copio el informe con instrucciones al portapapeles y abro la app o su web.", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+                Text("El informe con instrucciones se copia al portapapeles y se abre la app o su web.", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
                 Spacer(Modifier.height(10.dp))
                 AiTargets.all.forEach { t ->
                     val installed = remember(t.id) { AiTargets.isInstalled(ctx, t) }
@@ -392,7 +411,7 @@ private fun AiTargetDialog(enabled: Boolean, onDismiss: () -> Unit, onPick: (AiT
                                 when {
                                     installed -> "App instalada"
                                     t.prefillUrl != null -> "Web, con el resumen ya escrito"
-                                    else -> "Web, pegas el informe"
+                                    else -> "Web, hay que pegar el informe"
                                 },
                                 style = MaterialTheme.typography.bodySmall, color = TextMuted,
                             )

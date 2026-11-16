@@ -118,7 +118,7 @@ fun SimpleScreen(vm: SimpleViewModel) {
                 item {
                     Panel("Quieres saber QUE app usa la camara o el micro?", accent = Violet) {
                         Text(
-                            "Android no deja preguntarlo directamente, pero si me das 'Acceso a datos de uso' puedo cruzar el momento exacto en que se enciende con la app que estaba activa y decirte cual fue.",
+                            "Android no permite preguntarlo directamente. Con el permiso 'Acceso a datos de uso', la app cruza el momento exacto en que se enciende con la app que estaba activa e identifica la probable responsable.",
                             style = MaterialTheme.typography.bodyMedium, color = TextMuted,
                         )
                         Spacer(Modifier.height(10.dp))
@@ -149,7 +149,7 @@ fun SimpleScreen(vm: SimpleViewModel) {
                 Panel("Que hace el analisis", accent = Violet) {
                     Bullet("Comprueba si la camara o el microfono estan en uso en este instante.")
                     Bullet("Revisa todas las apps instaladas: de donde vienen, que permisos tienen y si se esconden.")
-                    Bullet("Te dice en una frase si el telefono descansa bien o algo lo mantiene despierto.")
+                    Bullet("Resume en una frase si el telefono descansa bien o algo lo mantiene despierto.")
                     Bullet("Nada sale de tu telefono. No hay internet de por medio.")
                 }
             }

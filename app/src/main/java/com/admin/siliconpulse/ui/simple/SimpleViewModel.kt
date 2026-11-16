@@ -77,7 +77,7 @@ class SimpleViewModel(
             detail = buildString {
                 append("Alguna app la tiene abierta en este momento. ")
                 if (camUsers.isNotEmpty()) append("Probablemente: ${camUsers.joinToString { it.label }}. ")
-                else if (!usageOk) append("Activa 'Acceso a datos de uso' para que pueda decirte cual. ")
+                else if (!usageOk) append("Con 'Acceso a datos de uso' activado se identifica cual. ")
                 append("Si no estas usando la camara, cierra todo y vuelve a analizar.")
             },
             verdict = Verdict.ALERT,
@@ -93,7 +93,7 @@ class SimpleViewModel(
                 if (priv.microphone.sources.isNotEmpty()) append(" (${priv.microphone.sources.joinToString()})")
                 append(". ")
                 if (micUsers.isNotEmpty()) append("Probablemente: ${micUsers.joinToString { it.label }}. ")
-                else if (!usageOk) append("Activa 'Acceso a datos de uso' para que pueda decirte cual. ")
+                else if (!usageOk) append("Con 'Acceso a datos de uso' activado se identifica cual. ")
                 append("Si no estas en una llamada ni grabando, es raro.")
             },
             verdict = Verdict.ALERT,
