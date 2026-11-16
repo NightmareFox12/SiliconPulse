@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import com.admin.siliconpulse.domain.model.PrivacyState
 import com.admin.siliconpulse.domain.repository.PrivacyRepository
 import com.admin.siliconpulse.ui.PermissionsBus
+import com.admin.siliconpulse.ui.MonitoringController
 import com.admin.siliconpulse.ui.components.Hairline
 import com.admin.siliconpulse.ui.components.KeyValue
 import com.admin.siliconpulse.ui.components.MetricTile
@@ -43,7 +44,7 @@ import kotlinx.coroutines.flow.stateIn
 @OptIn(ExperimentalCoroutinesApi::class)
 class PrivacyViewModel(repo: PrivacyRepository) : ViewModel() {
     val state: StateFlow<PrivacyState> = PermissionsBus.generation
-        .flatMapLatest { repo.observe() }
+        .flatMapLatest { MonitoringController.gate { repo.observe() } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PrivacyState())
 }
 

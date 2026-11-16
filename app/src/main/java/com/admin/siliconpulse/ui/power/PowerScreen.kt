@@ -30,6 +30,7 @@ import com.admin.siliconpulse.data.power.SleepTracker
 import com.admin.siliconpulse.data.power.SleepWatchService
 import com.admin.siliconpulse.domain.model.PowerState
 import com.admin.siliconpulse.domain.repository.PowerRepository
+import com.admin.siliconpulse.ui.MonitoringController
 import com.admin.siliconpulse.ui.components.Gauge
 import com.admin.siliconpulse.ui.components.Hairline
 import com.admin.siliconpulse.ui.components.HistoryChart
@@ -66,7 +67,7 @@ class PowerViewModel(repo: PowerRepository) : ViewModel() {
     private val _history = MutableStateFlow(PowerHistory())
     val history: StateFlow<PowerHistory> = _history
 
-    val state: StateFlow<PowerState> = repo.observe()
+    val state: StateFlow<PowerState> = MonitoringController.gate { repo.observe() }
         .onEach { s ->
             _history.update { h ->
                 PowerHistory(
@@ -78,11 +79,10 @@ class PowerViewModel(repo: PowerRepository) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PowerState())
 
-    val monitorRunning = MutableStateFlow(false)
+    val monitorRunning: StateFlow<Boolean> = SleepWatchService.running
 
     fun toggleMonitor(context: Context) {
         if (monitorRunning.value) SleepWatchService.stop(context) else SleepWatchService.start(context)
-        monitorRunning.value = !monitorRunning.value
     }
 
     private companion object { const val HISTORY = 180 }

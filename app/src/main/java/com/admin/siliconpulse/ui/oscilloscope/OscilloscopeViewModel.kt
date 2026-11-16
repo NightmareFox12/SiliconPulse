@@ -9,6 +9,7 @@ import com.admin.siliconpulse.domain.model.SamplingRate
 import com.admin.siliconpulse.domain.model.SensorChannel
 import com.admin.siliconpulse.domain.model.SensorDescriptor
 import com.admin.siliconpulse.domain.repository.SensorRepository
+import com.admin.siliconpulse.ui.MonitoringController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -58,23 +60,29 @@ class OscilloscopeViewModel(private val repo: SensorRepository) : ViewModel() {
         // Cada cambio de canal/tasa/pausa cancela la suscripcion anterior (flatMapLatest)
         // y por tanto desregistra el listener del SensorManager: cero fugas.
         viewModelScope.launch {
-            _ui.map { Selection(it.channel, it.rate, it.paused) }
-                .distinctUntilChanged()
-                .flatMapLatest { sel ->
-                    buffer.clear()
-                    if (sel.paused) emptyFlow()
-                    else repo.samples(sel.channel, sel.rate).catch { e -> _ui.update { s -> s.copy(error = e.message) } }
-                }
+            MonitoringController.gate {
+                _ui.map { Selection(it.channel, it.rate, it.paused) }
+                    .distinctUntilChanged()
+                    .flatMapLatest { sel ->
+                        buffer.clear()
+                        if (sel.paused) emptyFlow()
+                        else repo.samples(sel.channel, sel.rate).catch { e -> _ui.update { s -> s.copy(error = e.message) } }
+                    }
+            }
                 .collect { sample ->
                     buffer.push(sample.x, sample.y, sample.z, sample.timestampNanos)
                     if (sample.accuracy != _ui.value.accuracy) _ui.update { it.copy(accuracy = sample.accuracy) }
                 }
         }
+        // El bucle de 60 fps solo corre con la app en primer plano y sin pausa.
         viewModelScope.launch {
-            while (isActive) {
-                delay(16)
-                frame++
-                if (frame % 30 == 0) _ui.update { it.copy(sampleRateHz = buffer.estimatedHz()) }
+            MonitoringController.active.collectLatest { on ->
+                if (!on) return@collectLatest
+                while (isActive) {
+                    delay(16)
+                    frame++
+                    if (frame % 30 == 0) _ui.update { it.copy(sampleRateHz = buffer.estimatedHz()) }
+                }
             }
         }
     }

@@ -23,6 +23,7 @@ import androidx.lifecycle.viewModelScope
 import com.admin.siliconpulse.domain.model.RadioState
 import com.admin.siliconpulse.domain.repository.RadioRepository
 import com.admin.siliconpulse.ui.PermissionsBus
+import com.admin.siliconpulse.ui.MonitoringController
 import com.admin.siliconpulse.ui.components.Gauge
 import com.admin.siliconpulse.ui.components.Hairline
 import com.admin.siliconpulse.ui.components.HistoryChart
@@ -60,7 +61,7 @@ class RadiosViewModel(repo: RadioRepository) : ViewModel() {
     val history: StateFlow<RadioHistory> = _history
 
     val state: StateFlow<RadioState> = PermissionsBus.generation
-        .flatMapLatest { repo.observe() }
+        .flatMapLatest { MonitoringController.gate { repo.observe() } }
         .onEach { s ->
             _history.update { h ->
                 RadioHistory(

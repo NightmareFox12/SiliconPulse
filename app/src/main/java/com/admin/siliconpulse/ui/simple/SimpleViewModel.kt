@@ -11,6 +11,7 @@ import com.admin.siliconpulse.domain.model.SimpleReport
 import com.admin.siliconpulse.domain.model.Verdict
 import com.admin.siliconpulse.domain.repository.PowerRepository
 import com.admin.siliconpulse.domain.repository.PrivacyRepository
+import com.admin.siliconpulse.ui.MonitoringController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,7 @@ class SimpleViewModel(
     val ui: StateFlow<SimpleUiState> = _ui
 
     /** Estado vivo para el semaforo de la cabecera, antes de pulsar Analizar. */
-    val live: StateFlow<PrivacyState> = privacy.observe()
+    val live: StateFlow<PrivacyState> = MonitoringController.gate { privacy.observe() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PrivacyState())
 
     val usageAccess: Boolean get() = audit.isUsageAccessGranted()
