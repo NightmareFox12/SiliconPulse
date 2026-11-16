@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/Android-11%2B-3ddc84" alt="Android 11+">
   <img src="https://img.shields.io/badge/Kotlin-100%25-7f52ff" alt="Kotlin">
   <img src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285f4" alt="Compose">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT"></a>
 </p>
 
 ---
@@ -43,6 +44,7 @@ Tiene dos vistas que se cambian con un toque:
 ## Funciones
 
 ### Vista sencilla
+
 - **Semaforo en vivo** de camara, microfono y ubicacion, visible sin pulsar nada.
 - **Analisis en lenguaje claro**: veredicto general (verde, amarillo, rojo) y una tarjeta por hallazgo con que significa y que hacer.
 - **Detector de apps sospechosas**: puntua cada app por origen fuera de Play Store, sin icono en el launcher, instalada hace menos de 7 dias, ubicacion "siempre", lectura de SMS, servicio de accesibilidad activo o administrador del dispositivo, siempre que ademas tenga acceso a camara, microfono, ubicacion o SMS. Desde la lista se ven los permisos o se desinstala.
@@ -50,6 +52,7 @@ Tiene dos vistas que se cambian con un toque:
 - **Enviar a una IA**: prepara el analisis con instrucciones y lo manda a Claude, ChatGPT, Gemini, DeepSeek, Copilot, Perplexity o Kimi, por app o por web. Tambien se comparte por WhatsApp.
 
 ### Vista Pro
+
 - **Sensores**: osciloscopio en Canvas de acelerometro, aceleracion lineal, giroscopio, magnetometro, luz, proximidad, barometro (con altitud estimada) y podometro. Tasa UI / Game / Fastest. Lista completa de sensores del HAL con vendor, rango, resolucion y consumo.
 - **Privacidad**: grabaciones activas del sistema (AudioManager), camaras ocupadas por cualquier app (CameraManager), toggles de hardware, GNSS con satelites en fix y precision.
 - **Radios**: red movil (dBm, nivel, ASU, tecnologia, estado 5G NR, celda), Wi-Fi (RSSI, banda, estandar, velocidad TX/RX, IP) y Bluetooth (vinculados, conectados, perfiles), con historico de senal.
@@ -57,6 +60,7 @@ Tiene dos vistas que se cambian con un toque:
 - **Informe**: resumen en texto para WhatsApp, Markdown en tres niveles (resumen ejecutivo, tablas por componente, detalle tecnico) y JSON completo para comparar capturas o enviar a soporte.
 
 ### En general
+
 - Tema claro y oscuro automatico segun el sistema.
 - Boton **En vivo / Pausado** para congelar el monitoreo sin cerrar la app.
 - Al salir de la app todo se detiene. Solo el monitor de deep sleep, si lo activas, sigue en segundo plano con una notificacion que lo deja parar.
@@ -96,7 +100,7 @@ Stack: Kotlin, Jetpack Compose + Material 3, corrutinas y Flow, Kotlin Serializa
 
 ### Estructura
 
-```
+```text
 app/src/main/java/com/admin/siliconpulse/
 ├── domain/      modelos y contratos de repositorio
 ├── data/
@@ -131,4 +135,4 @@ Arquitectura MVVM con capas domain / data / ui. Cada repositorio expone un `Flow
 
 ## Licencia
 
-Pendiente de definir. Hasta entonces, todos los derechos reservados por el autor.
+[MIT](LICENSE). Usalo, modificalo y redistribuyelo libremente, manteniendo el aviso de copyright. Los logos de las IA pertenecen a sus respectivas marcas y no estan cubiertos por esta licencia.
