@@ -25,8 +25,8 @@ SiliconPulse responde a una pregunta sencilla: **"¿mi telefono esta haciendo al
 
 Tiene dos vistas que se cambian con un toque:
 
-| Vista sencilla (para cualquiera) | Vista Pro (para tecnicos) |
-|---|---|
+| Vista sencilla (para cualquiera)                                                                                                                                          | Vista Pro (para tecnicos)                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Un boton **Analizar** que en segundos dice si la camara o el microfono estan en uso, si la ubicacion esta activa, si hay apps sospechosas y si el telefono descansa bien. | Osciloscopio de sensores en tiempo real, auditoria de privacidad con las APIs del sistema, radios con historial de senal, energia con monitor de deep sleep, e informes exportables. |
 
 ## Capturas
@@ -35,16 +35,16 @@ Tema claro y oscuro automatico. Todas las capturas estan en [`docs/screenshots/`
 
 ### Vista sencilla
 
-| Inicio | Resultado | Enviar a IA |
-|---|---|---|
-| <img src="docs/screenshots/dark_simple_home.png" width="230"> | <img src="docs/screenshots/dark_simple_result.png" width="230"> | <img src="docs/screenshots/dark_simple_send.png" width="230"> |
+| Inicio                                                         | Resultado                                                        | Enviar a IA                                                    |
+| -------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| <img src="docs/screenshots/dark_simple_home.png" width="230">  | <img src="docs/screenshots/dark_simple_result.png" width="230">  | <img src="docs/screenshots/dark_simple_send.png" width="230">  |
 | <img src="docs/screenshots/light_simple_home.png" width="230"> | <img src="docs/screenshots/light_simple_result.png" width="230"> | <img src="docs/screenshots/light_simple_send.png" width="230"> |
 
 ### Vista Pro
 
-| Sensores | Privacidad | Radios | Energia | Informe |
-|---|---|---|---|---|
-| <img src="docs/screenshots/dark_pro_sensors.png" width="180"> | <img src="docs/screenshots/dark_pro_privacy.png" width="180"> | <img src="docs/screenshots/dark_pro_radios.png" width="180"> | <img src="docs/screenshots/dark_pro_power.png" width="180"> | <img src="docs/screenshots/dark_pro_export.png" width="180"> |
+| Sensores                                                       | Privacidad                                                     | Radios                                                        | Energia                                                      | Informe                                                       |
+| -------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| <img src="docs/screenshots/dark_pro_sensors.png" width="180">  | <img src="docs/screenshots/dark_pro_privacy.png" width="180">  | <img src="docs/screenshots/dark_pro_radios.png" width="180">  | <img src="docs/screenshots/dark_pro_power.png" width="180">  | <img src="docs/screenshots/dark_pro_export.png" width="180">  |
 | <img src="docs/screenshots/light_pro_sensors.png" width="180"> | <img src="docs/screenshots/light_pro_privacy.png" width="180"> | <img src="docs/screenshots/light_pro_radios.png" width="180"> | <img src="docs/screenshots/light_pro_power.png" width="180"> | <img src="docs/screenshots/light_pro_export.png" width="180"> |
 
 ## Funciones
@@ -54,7 +54,7 @@ Tema claro y oscuro automatico. Todas las capturas estan en [`docs/screenshots/`
 - **Semaforo en vivo** de camara, microfono y ubicacion, visible sin pulsar nada.
 - **Analisis en lenguaje claro**: veredicto general (verde, amarillo, rojo) y una tarjeta por hallazgo con que significa y que hacer.
 - **Detector de apps sospechosas**: puntua cada app por origen fuera de Play Store, sin icono en el launcher, instalada hace menos de 7 dias, ubicacion "siempre", lectura de SMS, servicio de accesibilidad activo o administrador del dispositivo, siempre que ademas tenga acceso a camara, microfono, ubicacion o SMS. Desde la lista se ven los permisos o se desinstala.
-- **Quien usa la camara o el micro**: con el permiso *Acceso a datos de uso* se cruza el instante en que se ocupan con la app que estaba activa. Enlace directo al Panel de privacidad oficial de Android para confirmarlo.
+- **Quien usa la camara o el micro**: con el permiso _Acceso a datos de uso_ se cruza el instante en que se ocupan con la app que estaba activa. Enlace directo al Panel de privacidad oficial de Android para confirmarlo.
 - **Enviar a una IA**: prepara el analisis con instrucciones y lo manda a Claude, ChatGPT, Gemini, DeepSeek, Copilot, Perplexity o Kimi, por app o por web. Tambien se comparte por WhatsApp.
 
 ### Vista Pro
@@ -81,15 +81,15 @@ Al instalar un APK fuera de Play Store, Android pedira permitir "fuentes descono
 
 SiliconPulse pide solo lo que necesita para leer, nunca para enviar. No declara permiso de internet.
 
-| Permiso | Para que |
-|---|---|
-| Ubicacion | SSID de la Wi-Fi, identidad de celda y satelites GNSS. Android no entrega esos datos sin el. |
-| Telefono (READ_PHONE_STATE) | Tipo de red movil y estado del servicio. |
-| Bluetooth | Listar dispositivos vinculados y conectados. |
-| Actividad fisica | Podometro por hardware. |
-| Notificaciones | Notificacion del monitor de deep sleep. |
-| Consultar todas las apps | Inventario de apps y permisos para el detector de sospechosas. |
-| Acceso a datos de uso (opcional, en Ajustes) | Saber que app estaba activa cuando se ocupo la camara o el micro. |
+| Permiso                                      | Para que                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Ubicacion                                    | SSID de la Wi-Fi, identidad de celda y satelites GNSS. Android no entrega esos datos sin el. |
+| Telefono (READ_PHONE_STATE)                  | Tipo de red movil y estado del servicio.                                                     |
+| Bluetooth                                    | Listar dispositivos vinculados y conectados.                                                 |
+| Actividad fisica                             | Podometro por hardware.                                                                      |
+| Notificaciones                               | Notificacion del monitor de deep sleep.                                                      |
+| Consultar todas las apps                     | Inventario de apps y permisos para el detector de sospechosas.                               |
+| Acceso a datos de uso (opcional, en Ajustes) | Saber que app estaba activa cuando se ocupo la camara o el micro.                            |
 
 ## Compilar
 
@@ -127,10 +127,9 @@ Arquitectura MVVM con capas domain / data / ui. Cada repositorio expone un `Flow
 
 ## Limitaciones honestas
 
-- **Atribucion de camara y microfono**: Android no permite a una app normal preguntar que paquete tiene abierta la camara (requiere `WATCH_APPOPS`, de sistema). SiliconPulse detecta *que* se estan usando con certeza y deduce *quien* por correlacion temporal. La fuente definitiva es el Panel de privacidad del sistema, al que enlaza.
+- **Atribucion de camara y microfono**: Android no permite a una app normal preguntar que paquete tiene abierta la camara (requiere `WATCH_APPOPS`, de sistema). SiliconPulse detecta _que_ se estan usando con certeza y deduce _quien_ por correlacion temporal. La fuente definitiva es el Panel de privacidad del sistema, al que enlaza.
 - **Deep sleep**: la medicion necesita el cable desconectado y la pantalla apagada unos minutos; con USB y depuracion activa el SoC no duerme.
 - **Frecuencias de CPU**: algunos kernels no exponen `cpufreq` a apps de usuario.
-- **Logos de IA**: pertenecen a sus respectivas marcas y se usan solo para identificar el destino.
 
 ## Hoja de ruta
 
