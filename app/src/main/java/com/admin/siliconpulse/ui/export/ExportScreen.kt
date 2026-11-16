@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Radar
+import androidx.compose.material.icons.filled.SaveAlt
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -191,9 +198,12 @@ fun ExportScreen(vm: ExportViewModel) {
                     color = TextMuted,
                 )
                 Spacer(Modifier.height(12.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Button(onClick = vm::buildSnapshot, enabled = !ui.building) {
-                        if (ui.building) CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp) else Text("Capturar estado")
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = vm::buildSnapshot, enabled = !ui.building, modifier = Modifier.weight(1f)) {
+                        if (ui.building) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                        else Icon(Icons.Filled.Radar, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Capturar", maxLines = 1)
                     }
                     OutlinedButton(
                         onClick = {
@@ -203,7 +213,12 @@ fun ExportScreen(vm: ExportViewModel) {
                         enabled = ui.text != null,
                         colors = secondaryButtonColors(),
                         border = secondaryBorder(ui.text != null),
-                    ) { Text("Compartir resumen") }
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Compartir", maxLines = 1)
+                    }
                 }
                 ui.message?.let { Note(it) }
             }
@@ -218,15 +233,17 @@ fun ExportScreen(vm: ExportViewModel) {
                     style = MaterialTheme.typography.bodyMedium, color = TextMuted,
                 )
                 Spacer(Modifier.height(10.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    OutlinedButton(onClick = { saveMdLauncher.launch(vm.suggestedName("md")) }, enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null)) { Text("Guardar .md") }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { saveMdLauncher.launch(vm.suggestedName("md")) }, enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null), modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Guardar .md", maxLines = 1)
+                    }
                     OutlinedButton(
                         onClick = {
                             val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_SUBJECT, vm.suggestedName("md")); putExtra(Intent.EXTRA_TEXT, ui.markdown) }
                             ctx.startActivity(Intent.createChooser(send, "Compartir informe Markdown"))
                         },
-                        enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null),
-                    ) { Text("Compartir .md") }
+                        enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null), modifier = Modifier.weight(1f),
+                    ) { Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Compartir", maxLines = 1) }
                 }
             }
         }
@@ -244,13 +261,18 @@ fun ExportScreen(vm: ExportViewModel) {
                     style = MaterialTheme.typography.bodyMedium, color = TextMuted,
                 )
                 Spacer(Modifier.height(10.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    OutlinedButton(onClick = { saveLauncher.launch(vm.suggestedName()) }, enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null)) { Text("Guardar .json") }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { saveLauncher.launch(vm.suggestedName()) }, enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null), modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Guardar .json", maxLines = 1)
+                    }
                     OutlinedButton(
                         onClick = {
                             val send = Intent(Intent.ACTION_SEND).apply { type = "application/json"; putExtra(Intent.EXTRA_SUBJECT, vm.suggestedName()); putExtra(Intent.EXTRA_TEXT, ui.json) }
                             ctx.startActivity(Intent.createChooser(send, "Compartir JSON"))
                         },
+                        enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null), modifier = Modifier.weight(1f),
+                    ) { Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Compartir", maxLines = 1) }
+                },
                         enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null),
                     ) { Text("Compartir JSON") }
                 }
@@ -302,16 +324,20 @@ private fun AiExportCard(enabled: Boolean, onClick: () -> Unit) {
             .clickable(enabled = enabled, onClick = onClick)
             .padding(18.dp),
     ) {
-        Text("Exportar para IA", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = Violet, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Exportar para IA", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        }
         Spacer(Modifier.height(4.dp))
         Text(
-            if (enabled) "Elige Claude, ChatGPT, Gemini, DeepSeek, Copilot o Perplexity. Te preparo el informe con instrucciones para que la IA lo interprete y te diga que hacer."
+            if (enabled) "Elige Claude, ChatGPT, Gemini, DeepSeek, Copilot, Perplexity o Kimi. Te preparo el informe con instrucciones para que la IA lo interprete y te diga que hacer."
             else "Primero pulsa Capturar estado. Luego podras mandarle el informe a la IA que prefieras.",
             style = MaterialTheme.typography.bodyMedium, color = TextMuted,
         )
         Spacer(Modifier.height(10.dp))
-        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AiTargets.all.forEach { AiLogo(it, 30.dp) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            AiTargets.all.forEach { AiLogo(it, 32.dp) }
         }
     }
 }

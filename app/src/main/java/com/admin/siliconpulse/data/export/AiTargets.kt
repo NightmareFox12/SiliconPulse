@@ -36,6 +36,7 @@ object AiTargets {
         AiTarget("deepseek", "DeepSeek", Color(0xFF4D6BFE), "com.deepseek.chat", "https://chat.deepseek.com/", null),
         AiTarget("copilot", "Copilot", Color(0xFF7B61FF), "com.microsoft.copilot", "https://copilot.microsoft.com/", null),
         AiTarget("perplexity", "Perplexity", Color(0xFF20808D), "ai.perplexity.app.android", "https://www.perplexity.ai/", "https://www.perplexity.ai/search?q=%s"),
+        AiTarget("kimi", "Kimi", Color(0xFF111111), "com.moonshot.kimichat", "https://www.kimi.com/", null),
     )
 
     fun isInstalled(context: Context, t: AiTarget): Boolean =
