@@ -25,6 +25,7 @@ import com.admin.siliconpulse.ui.theme.AxisZ
 import com.admin.siliconpulse.ui.theme.Ink
 import com.admin.siliconpulse.ui.theme.InkDeep
 import com.admin.siliconpulse.ui.theme.Outline
+import com.admin.siliconpulse.ui.theme.TextMuted
 
 /**
  * Grafica oscilografica. `frame` es un contador que el ViewModel incrementa una vez
@@ -43,9 +44,10 @@ fun OscilloscopeCanvas(
 ) {
     val paths = remember { Array(3) { Path() } }
     val area = remember { Path() }
-    val textPaint = remember {
+    val labelColor = TextMuted
+    val textPaint = remember(labelColor) {
         android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(170, 138, 150, 179)
+            color = android.graphics.Color.argb(230, (labelColor.red * 255).toInt(), (labelColor.green * 255).toInt(), (labelColor.blue * 255).toInt())
             textSize = 22f
             typeface = android.graphics.Typeface.MONOSPACE
             isAntiAlias = true

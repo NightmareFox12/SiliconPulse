@@ -53,8 +53,8 @@ val DarkPalette = Palette(
 
 /** Clara: mismos acentos pero mas saturados y oscuros para contrastar sobre blanco. */
 val LightPalette = Palette(
-    ink = Color(0xFFF3F5FA),
-    inkDeep = Color(0xFFFFFFFF),
+    ink = Color(0xFFEDF0F6),
+    inkDeep = Color(0xFFF4F6FB),
     panel = Color(0xFFFFFFFF),
     panelHigh = Color(0xFFF6F8FC),
     outline = Color(0xFFD9E0EB),
