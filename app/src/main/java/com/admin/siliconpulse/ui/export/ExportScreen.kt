@@ -15,6 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,12 +30,18 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.admin.siliconpulse.data.export.AiTarget
+import com.admin.siliconpulse.data.export.AiTargets
+import com.admin.siliconpulse.data.export.MarkdownReport
 import com.admin.siliconpulse.data.export.ReportExporter
 import com.admin.siliconpulse.domain.model.DiagnosticReport
 import com.admin.siliconpulse.domain.model.SamplingRate
@@ -45,6 +58,11 @@ import com.admin.siliconpulse.ui.theme.TextMuted
 import com.admin.siliconpulse.ui.theme.Mint
 import com.admin.siliconpulse.ui.theme.Outline
 import com.admin.siliconpulse.ui.theme.Violet
+import com.admin.siliconpulse.ui.theme.Sky
+import com.admin.siliconpulse.ui.theme.Cyan
+import com.admin.siliconpulse.ui.theme.Ink
+import com.admin.siliconpulse.ui.theme.Panel as PanelColor
+import com.admin.siliconpulse.ui.theme.Outline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -64,6 +82,7 @@ data class ExportUiState(
     val report: DiagnosticReport? = null,
     val json: String? = null,
     val text: String? = null,
+    val markdown: String? = null,
     val message: String? = null,
 )
 
@@ -101,7 +120,8 @@ class ExportViewModel(
                     )
                     val json = withContext(Dispatchers.Default) { exporter.toJson(report) }
                     val text = exporter.toPlainText(report)
-                    _ui.update { it.copy(building = false, report = report, json = json, text = text, message = "Informe listo. Texto de ${text.lines().size} lineas, JSON de ${json.length / 1024} KB.") }
+                    val md = exporter.toMarkdown(report)
+                    _ui.update { it.copy(building = false, report = report, json = json, text = text, markdown = md, message = "Informe listo: ${MarkdownReport.alerts(report).size} alertas detectadas.") }
                 }
             }.onFailure { e ->
                 _ui.update { it.copy(building = false, message = "Error: ${e.message}") }
@@ -121,13 +141,16 @@ class ExportViewModel(
         return SensorChannelSnapshot(ch.name, ch.unit, true, last.x, last.y, last.z, hz, last.accuracy)
     }
 
-    fun suggestedName() = exporter.suggestedFileName()
+    fun suggestedName(ext: String = "json") = exporter.suggestedFileName(ext)
+    fun aiPrompt(): String? = _ui.value.report?.let { exporter.toAiPrompt(it) }
+    fun aiPromptShort(): String? = _ui.value.report?.let { exporter.toAiPromptShort(it) }
+    fun setMessage(m: String) = _ui.update { it.copy(message = m) }
 
-    fun writeTo(uri: Uri, resolver: android.content.ContentResolver) {
-        val json = _ui.value.json ?: return
+    fun writeTo(uri: Uri, resolver: android.content.ContentResolver, content: String?) {
+        val payload = content ?: return
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                resolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } ?: error("No se pudo abrir el destino")
+                resolver.openOutputStream(uri)?.use { it.write(payload.toByteArray()) } ?: error("No se pudo abrir el destino")
             }.onSuccess { _ui.update { it.copy(message = "Guardado en ${uri.lastPathSegment}") } }
                 .onFailure { e -> _ui.update { it.copy(message = "Error al guardar: ${e.message}") } }
         }
@@ -140,7 +163,22 @@ fun ExportScreen(vm: ExportViewModel) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        if (uri != null) vm.writeTo(uri, ctx.contentResolver)
+        if (uri != null) vm.writeTo(uri, ctx.contentResolver, ui.json)
+    }
+    val saveMdLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
+        if (uri != null) vm.writeTo(uri, ctx.contentResolver, ui.markdown)
+    }
+    var showAiDialog by remember { mutableStateOf(false) }
+    if (showAiDialog) {
+        AiTargetDialog(
+            enabled = ui.report != null,
+            onDismiss = { showAiDialog = false },
+            onPick = { t ->
+                showAiDialog = false
+                val full = vm.aiPrompt(); val short = vm.aiPromptShort()
+                if (full != null && short != null) vm.setMessage(AiTargets.open(ctx, t, full, short))
+            },
+        )
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -168,6 +206,28 @@ fun ExportScreen(vm: ExportViewModel) {
                     ) { Text("Compartir resumen") }
                 }
                 ui.message?.let { Note(it) }
+            }
+        }
+        item {
+            AiExportCard(enabled = ui.report != null, onClick = { showAiDialog = true })
+        }
+        item {
+            Panel("Informe Markdown", subtitle = "resumen ejecutivo, tablas y detalle tecnico", accent = Sky) {
+                Text(
+                    "Un .md con tres niveles: estado de salud y alertas arriba, tablas por componente en medio y el detalle tecnico al final. Se abre en cualquier editor, navegador o IA.",
+                    style = MaterialTheme.typography.bodyMedium, color = TextMuted,
+                )
+                Spacer(Modifier.height(10.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    OutlinedButton(onClick = { saveMdLauncher.launch(vm.suggestedName("md")) }, enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null)) { Text("Guardar .md") }
+                    OutlinedButton(
+                        onClick = {
+                            val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_SUBJECT, vm.suggestedName("md")); putExtra(Intent.EXTRA_TEXT, ui.markdown) }
+                            ctx.startActivity(Intent.createChooser(send, "Compartir informe Markdown"))
+                        },
+                        enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null),
+                    ) { Text("Compartir .md") }
+                }
             }
         }
         ui.text?.let { t ->
@@ -228,3 +288,98 @@ private fun secondaryButtonColors() = ButtonDefaults.outlinedButtonColors(
 
 @Composable
 private fun secondaryBorder(enabled: Boolean) = BorderStroke(1.dp, if (enabled) MaterialTheme.colorScheme.primary else Outline)
+
+/** Tarjeta destacada: exportar para IA. */
+@Composable
+private fun AiExportCard(enabled: Boolean, onClick: () -> Unit) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
+    androidx.compose.foundation.layout.Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Cyan.copy(alpha = 0.16f), Violet.copy(alpha = 0.16f))))
+            .border(1.dp, androidx.compose.ui.graphics.Brush.linearGradient(listOf(Cyan, Violet)), shape)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(18.dp),
+    ) {
+        Text("Exportar para IA", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            if (enabled) "Elige Claude, ChatGPT, Gemini, DeepSeek, Copilot o Perplexity. Te preparo el informe con instrucciones para que la IA lo interprete y te diga que hacer."
+            else "Primero pulsa Capturar estado. Luego podras mandarle el informe a la IA que prefieras.",
+            style = MaterialTheme.typography.bodyMedium, color = TextMuted,
+        )
+        Spacer(Modifier.height(10.dp))
+        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            AiTargets.all.forEach { AiLogo(it, 30.dp) }
+        }
+    }
+}
+
+/** Logo real si existe res/drawable-nodpi/ai_<id>.png; si no, monograma con el color de marca. */
+@Composable
+private fun AiLogo(t: AiTarget, size: androidx.compose.ui.unit.Dp) {
+    val ctx = LocalContext.current
+    val resId = remember(t.id) { ctx.resources.getIdentifier(t.logoResName, "drawable", ctx.packageName) }
+    if (resId != 0) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(resId),
+            contentDescription = t.name,
+            modifier = Modifier.size(size).clip(androidx.compose.foundation.shape.CircleShape),
+        )
+    } else {
+        androidx.compose.foundation.layout.Box(
+            Modifier
+                .size(size)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(t.brand),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            Text(t.name.take(1), style = MaterialTheme.typography.titleSmall, color = androidx.compose.ui.graphics.Color.White)
+        }
+    }
+}
+
+@Composable
+private fun AiTargetDialog(enabled: Boolean, onDismiss: () -> Unit, onPick: (AiTarget) -> Unit) {
+    val ctx = LocalContext.current
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = PanelColor,
+        title = { Text("Enviar informe a una IA", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                Text("Copio el informe con instrucciones al portapapeles y abro la app o su web.", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+                Spacer(Modifier.height(10.dp))
+                AiTargets.all.forEach { t ->
+                    val installed = remember(t.id) { AiTargets.isInstalled(ctx, t) }
+                    androidx.compose.foundation.layout.Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                            .clickable(enabled = enabled) { onPick(t) }
+                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        AiLogo(t, 40.dp)
+                        Spacer(Modifier.width(14.dp))
+                        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+                            Text(t.name, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                when {
+                                    installed -> "App instalada"
+                                    t.prefillUrl != null -> "Web, con el resumen ya escrito"
+                                    else -> "Web, pegas el informe"
+                                },
+                                style = MaterialTheme.typography.bodySmall, color = TextMuted,
+                            )
+                        }
+                        if (installed) com.admin.siliconpulse.ui.components.StatusPill("APP", alert = false)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
+}

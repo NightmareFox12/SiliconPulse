@@ -83,8 +83,18 @@ class ReportExporter(private val context: Context) {
         if (r.notes.isNotEmpty()) { appendLine(); appendLine("NOTAS"); r.notes.forEach { appendLine("- $it") } }
     }
 
-    fun suggestedFileName(): String =
-        "siliconpulse_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".json"
+    fun toMarkdown(report: DiagnosticReport): String = MarkdownReport.render(report)
+    fun toAiPrompt(report: DiagnosticReport): String = MarkdownReport.aiPrompt(report)
+
+    /** Version corta del prompt para URLs con texto prellenado. */
+    fun toAiPromptShort(report: DiagnosticReport): String {
+        val md = MarkdownReport.render(report)
+        val cut = md.indexOf("## 2.").takeIf { it > 0 } ?: md.length
+        return "Analiza este resumen de mi telefono Android y dime en espanol si hay algo preocupante y que hacer:\n\n" + md.substring(0, cut)
+    }
+
+    fun suggestedFileName(ext: String = "json"): String =
+        "siliconpulse_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".$ext"
 
     private fun deviceInfo() = DeviceInfo(
         manufacturer = Build.MANUFACTURER,

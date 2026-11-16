@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -61,12 +62,14 @@ fun Panel(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(22.dp)
+    val dark = com.admin.siliconpulse.ui.theme.SPTheme.palette.isDark
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .then(if (dark) Modifier else Modifier.shadow(6.dp, shape, ambientColor = Color(0x1A0E1420), spotColor = Color(0x1A0E1420)))
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(PanelHigh.copy(alpha = 0.9f), Panel)))
-            .border(1.dp, PanelBorderBrush, shape)
+            .background(if (dark) Brush.verticalGradient(listOf(PanelHigh.copy(alpha = 0.9f), Panel)) else Brush.verticalGradient(listOf(Panel, Panel)))
+            .border(1.dp, if (dark) PanelBorderBrush else Brush.verticalGradient(listOf(Outline, Outline)), shape)
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
