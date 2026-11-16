@@ -63,7 +63,6 @@ import com.admin.siliconpulse.ui.theme.Sky
 import com.admin.siliconpulse.ui.theme.TextMuted
 
 /**
- * Bloque "enviar a una IA": aparece con caida y rebote cuando hay informe, abre el
  * selector de IA y opcionalmente ofrece compartir el texto por WhatsApp.
  * Lo usan la vista Pro (pestana Informe) y la vista Sencilla (tras el analisis).
  */
@@ -91,7 +90,6 @@ fun AiExportBlock(
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        // Entrada suave: se despliega y asienta con un toque de escala, sin salirse del borde.
         enter = fadeIn(tween(450)) +
             expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) +
             scaleIn(initialScale = 0.94f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)),
@@ -164,7 +162,6 @@ private fun AiExportCard(onClick: () -> Unit, onShare: (() -> Unit)?) {
     }
 }
 
-/** Logo real si existe res/drawable-nodpi/ai_<id>.png; si no, monograma con el color de marca. */
 @Composable
 fun AiLogo(t: AiTarget, size: Dp) {
     val ctx = LocalContext.current
