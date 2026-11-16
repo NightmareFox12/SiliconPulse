@@ -70,99 +70,143 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+enum class SimpleSection(val label: String) { HOME("Inicio"), RESULT("Resultado"), SEND("Enviar") }
+
 @Composable
-fun SimpleScreen(vm: SimpleViewModel) {
+fun SimpleScreen(vm: SimpleViewModel, section: SimpleSection, onNavigate: (SimpleSection) -> Unit) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val live by vm.live.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
 
+    // Al terminar un analisis nuevo, saltar a Resultado.
+    androidx.compose.runtime.LaunchedEffect(ui.report?.generatedAtEpochMs) {
+        if (ui.report != null) onNavigate(SimpleSection.RESULT)
+    }
+
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            // Semaforo en vivo: lo primero que se ve, sin pulsar nada.
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                LiveTile("Camara", if (live.camera.inUse) "ENCENDIDA" else "apagada", live.camera.inUse, Modifier.weight(1f))
-                LiveTile("Microfono", if (live.microphone.inUse) "ESCUCHANDO" else "en silencio", live.microphone.inUse, Modifier.weight(1f))
-                LiveTile("Ubicacion", if (live.location.locationEnabled) "encendida" else "apagada", false, Modifier.weight(1f), neutral = !live.location.locationEnabled)
-            }
-        }
-        item { AnalyzeButton(analyzing = ui.analyzing, progress = ui.progress, onClick = vm::analyze) }
-
-        ui.error?.let { e -> item { Panel("No pude completar el analisis", accent = Rose) { Text(e, color = Rose) } } }
-
-        ui.report?.let { r ->
-            item {
-                val c = verdictColor(r.overall)
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Brush.verticalGradient(listOf(c.copy(alpha = 0.22f), c.copy(alpha = 0.06f))))
-                        .border(1.dp, c.copy(alpha = 0.45f), RoundedCornerShape(22.dp))
-                        .padding(18.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        VerdictDot(r.overall, 14.dp)
-                        Spacer(Modifier.width(10.dp))
-                        Text(r.headline, style = MaterialTheme.typography.titleLarge, color = c)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "Analizado a las ${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(r.generatedAtEpochMs))} · ${r.totalApps} apps revisadas",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextMuted,
-                    )
-                }
-            }
-            items(r.findings) { f -> FindingCard(f, vm) }
-            item {
-                AiExportBlock(
-                    visible = true,
-                    fullPrompt = { vm.aiPrompt() },
-                    shortPrompt = { vm.aiPromptShort() },
-                    onMessage = { vm.setMessage(it) },
-                    shareText = { vm.plainText() },
-                )
-                ui.message?.let { Note(it) }
-            }
-
-            if (!r.usageAccessGranted) {
+        when (section) {
+            SimpleSection.HOME -> {
                 item {
-                    Panel("Quieres saber QUE app usa la camara o el micro?", accent = Violet) {
-                        Text(
-                            "Android no permite preguntarlo directamente. Con el permiso 'Acceso a datos de uso', la app cruza el momento exacto en que se enciende con la app que estaba activa e identifica la probable responsable.",
-                            style = MaterialTheme.typography.bodyMedium, color = TextMuted,
-                        )
-                        Spacer(Modifier.height(10.dp))
-                        OutlinedButton(onClick = { ctx.startActivity(vm.usageAccessIntent()) }) { Text("Dar acceso a datos de uso") }
+                    // Semaforo en vivo: lo primero que se ve, sin pulsar nada.
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        LiveTile("Camara", if (live.camera.inUse) "ENCENDIDA" else "apagada", live.camera.inUse, Modifier.weight(1f))
+                        LiveTile("Microfono", if (live.microphone.inUse) "ESCUCHANDO" else "en silencio", live.microphone.inUse, Modifier.weight(1f))
+                        LiveTile("Ubicacion", if (live.location.locationEnabled) "encendida" else "apagada", false, Modifier.weight(1f), neutral = !live.location.locationEnabled)
+                    }
+                }
+                item { AnalyzeButton(analyzing = ui.analyzing, progress = ui.progress, onClick = vm::analyze) }
+                ui.error?.let { e -> item { Panel("No se pudo completar el analisis", accent = Rose) { Text(e, color = Rose) } } }
+                ui.report?.let { r ->
+                    item {
+                        Panel("Ultimo analisis", subtitle = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(r.generatedAtEpochMs)), accent = verdictColor(r.overall),
+                            trailing = { TextButton(onClick = { onNavigate(SimpleSection.RESULT) }) { Text("Ver resultado") } }) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                VerdictDot(r.overall, 12.dp)
+                                Spacer(Modifier.width(8.dp))
+                                Text(r.headline, style = MaterialTheme.typography.titleSmall, color = verdictColor(r.overall))
+                            }
+                        }
+                    }
+                }
+                item {
+                    Panel("Que hace el analisis", accent = Violet) {
+                        Bullet("Comprueba si la camara o el microfono estan en uso en este instante.")
+                        Bullet("Revisa todas las apps instaladas: de donde vienen, que permisos tienen y si se esconden.")
+                        Bullet("Resume en una frase si el telefono descansa bien o algo lo mantiene despierto.")
+                        Bullet("Nada sale de tu telefono. No hay internet de por medio.")
                     }
                 }
             }
-            item {
-                Panel("Historial oficial de Android", subtitle = "quien uso camara, micro y ubicacion en 24 h", accent = Cyan) {
-                    Text(
-                        "El propio sistema lleva un registro exacto por app. Es la fuente mas fiable para confirmar sospechas.",
-                        style = MaterialTheme.typography.bodyMedium, color = TextMuted,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedButton(onClick = { if (!vm.openPrivacyDashboard(ctx)) vm.setMessage("No se pudo abrir el panel de privacidad en este telefono.") }) { Text("Abrir Panel de privacidad") }
-                }
-            }
-            if (r.suspiciousApps.isNotEmpty()) {
-                item { Text("Apps a revisar", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
-                items(r.suspiciousApps, key = { it.packageName }) { app -> AppCard(app, vm) }
-            }
-        }
 
-        if (ui.report == null && !ui.analyzing) {
-            item {
-                Panel("Que hace el analisis", accent = Violet) {
-                    Bullet("Comprueba si la camara o el microfono estan en uso en este instante.")
-                    Bullet("Revisa todas las apps instaladas: de donde vienen, que permisos tienen y si se esconden.")
-                    Bullet("Resume en una frase si el telefono descansa bien o algo lo mantiene despierto.")
-                    Bullet("Nada sale de tu telefono. No hay internet de por medio.")
+            SimpleSection.RESULT -> {
+                val r = ui.report
+                if (r == null) {
+                    item { EmptyState("Aun no hay analisis", "Ve a Inicio y pulsa Analizar. El resultado aparecera aqui.", onNavigate) }
+                } else {
+                    item {
+                        val c = verdictColor(r.overall)
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Brush.verticalGradient(listOf(c.copy(alpha = 0.22f), c.copy(alpha = 0.06f))))
+                                .border(1.dp, c.copy(alpha = 0.45f), RoundedCornerShape(22.dp))
+                                .padding(18.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                VerdictDot(r.overall, 14.dp)
+                                Spacer(Modifier.width(10.dp))
+                                Text(r.headline, style = MaterialTheme.typography.titleLarge, color = c)
+                            }
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Analizado a las ${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(r.generatedAtEpochMs))} · ${r.totalApps} apps revisadas",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextMuted,
+                            )
+                        }
+                    }
+                    items(r.findings) { f -> FindingCard(f, vm) }
+                    if (r.suspiciousApps.isNotEmpty()) {
+                        item { Text("Apps a revisar", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
+                        items(r.suspiciousApps, key = { it.packageName }) { app -> AppCard(app, vm) }
+                    }
+                    if (!r.usageAccessGranted) {
+                        item {
+                            Panel("Quieres saber QUE app usa la camara o el micro?", accent = Violet) {
+                                Text(
+                                    "Android no permite preguntarlo directamente. Con el permiso 'Acceso a datos de uso', la app cruza el momento exacto en que se enciende con la app que estaba activa e identifica la probable responsable.",
+                                    style = MaterialTheme.typography.bodyMedium, color = TextMuted,
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                OutlinedButton(onClick = { ctx.startActivity(vm.usageAccessIntent()) }) { Text("Dar acceso a datos de uso") }
+                            }
+                        }
+                    }
+                    item {
+                        Panel("Historial oficial de Android", subtitle = "quien uso camara, micro y ubicacion en 24 h", accent = Cyan) {
+                            Text(
+                                "El propio sistema lleva un registro exacto por app. Es la fuente mas fiable para confirmar sospechas.",
+                                style = MaterialTheme.typography.bodyMedium, color = TextMuted,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            OutlinedButton(onClick = { if (!vm.openPrivacyDashboard(ctx)) vm.setMessage("No se pudo abrir el panel de privacidad en este telefono.") }) { Text("Abrir Panel de privacidad") }
+                        }
+                    }
+                }
+            }
+
+            SimpleSection.SEND -> {
+                if (ui.report == null) {
+                    item { EmptyState("Nada que enviar todavia", "Primero haz un analisis desde Inicio. Despues podras mandarlo a una IA o compartirlo por WhatsApp.", onNavigate) }
+                } else {
+                    item {
+                        AiExportBlock(
+                            visible = true,
+                            fullPrompt = { vm.aiPrompt() },
+                            shortPrompt = { vm.aiPromptShort() },
+                            onMessage = { vm.setMessage(it) },
+                            shareText = { vm.plainText() },
+                        )
+                        ui.message?.let { Note(it) }
+                    }
+                    item {
+                        Panel("Que se envia", subtitle = "el mismo texto para la IA y para WhatsApp", accent = Mint) {
+                            Text(vm.plainText() ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyState(title: String, body: String, onNavigate: (SimpleSection) -> Unit) {
+    Panel(title, accent = TextMuted) {
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+        Spacer(Modifier.height(10.dp))
+        OutlinedButton(onClick = { onNavigate(SimpleSection.HOME) }) { Text("Ir a Inicio") }
     }
 }
 

@@ -28,6 +28,7 @@ data class SimpleUiState(
     val progress: String? = null,
     val report: SimpleReport? = null,
     val error: String? = null,
+    val message: String? = null,
 )
 
 /**
@@ -172,8 +173,48 @@ class SimpleViewModel(
             .sortedByDescending { it.lastForegroundEpochMs ?: 0L }
             .take(3)
 
+    fun setMessage(m: String) = _ui.update { it.copy(message = m) }
+
+    /** Texto llano del analisis, para WhatsApp o para pegar donde sea. */
+    fun plainText(): String? = _ui.value.report?.let { r ->
+        buildString {
+            appendLine("SiliconPulse - Analisis de mi telefono")
+            appendLine("${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} - Android ${android.os.Build.VERSION.RELEASE}")
+            appendLine("Resultado: ${r.headline}")
+            appendLine()
+            r.findings.forEach { f ->
+                appendLine("[${when (f.verdict) { Verdict.OK -> "OK"; Verdict.WARN -> "REVISAR"; Verdict.ALERT -> "ALERTA" }}] ${f.title}")
+                appendLine("  ${f.detail}")
+                if (f.apps.isNotEmpty()) appendLine("  Apps: ${f.apps.joinToString { "${it.label} (${it.packageName})" }}")
+            }
+            if (r.suspiciousApps.isNotEmpty()) {
+                appendLine()
+                appendLine("APPS A REVISAR")
+                r.suspiciousApps.forEach { a ->
+                    appendLine("- ${a.label} (${a.packageName}), riesgo ${a.score}")
+                    a.reasons.forEach { appendLine("    · $it") }
+                }
+            }
+            appendLine()
+            appendLine("${r.totalApps} apps revisadas. Acceso a datos de uso: ${if (r.usageAccessGranted) "si" else "no"}.")
+        }
+    }
+
+    /** Prompt completo para una IA: contexto + instrucciones + analisis. */
+    fun aiPrompt(): String? = plainText()?.let { body ->
+        "Actua como un tecnico de Android experto en privacidad y seguridad. Abajo esta el analisis que hizo la app SiliconPulse en mi telefono. " +
+            "Explicame en lenguaje claro, sin jerga, si hay algo preocupante, que app podria ser la causa y que debo hacer paso a paso. " +
+            "Si todo esta bien, dimelo claramente. Responde en espanol.\n\n---\n\n" + body
+    }
+
+    /** Version corta para URLs con texto prellenado. */
+    fun aiPromptShort(): String? = _ui.value.report?.let { r ->
+        "Analiza este resumen de mi telefono Android y dime en espanol si hay algo preocupante y que hacer:\n" +
+            "Resultado: ${r.headline}. " + r.findings.joinToString(" ") { "${it.title}." }
+    }
+
     fun usageAccessIntent() = audit.usageAccessIntent()
-    fun privacyDashboardIntent() = audit.privacyDashboardIntent()
+    fun openPrivacyDashboard(context: android.content.Context) = audit.openPrivacyDashboard(context)
     fun appInfoIntent(pkg: String) = audit.appInfoIntent(pkg)
     fun uninstallIntent(pkg: String) = audit.uninstallIntent(pkg)
 }

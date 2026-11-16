@@ -67,6 +67,10 @@ import com.admin.siliconpulse.ui.privacy.PrivacyViewModel
 import com.admin.siliconpulse.ui.radios.RadiosScreen
 import com.admin.siliconpulse.ui.radios.RadiosViewModel
 import com.admin.siliconpulse.ui.simple.SimpleScreen
+import com.admin.siliconpulse.ui.simple.SimpleSection
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.AutoAwesome
 import com.admin.siliconpulse.ui.simple.SimpleViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.admin.siliconpulse.ui.theme.AccentBrush
@@ -93,6 +97,7 @@ enum class Tab(val label: String, val title: String, val caption: String, val ic
 @Composable
 fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequestPermissions: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.SENSORS) }
+    var simpleSection by rememberSaveable { mutableStateOf(SimpleSection.HOME) }
     val mode by container.viewMode.mode.collectAsStateWithLifecycle()
 
     val factory = remember(container) {
@@ -113,13 +118,13 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
             contentColor = MaterialTheme.colorScheme.onBackground,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = { Header(tab, mode) { container.viewMode.set(it) } },
-            bottomBar = { if (mode == ViewMode.PRO) BottomNav(tab) { tab = it } },
+            bottomBar = { if (mode == ViewMode.PRO) BottomNav(tab) { tab = it } else SimpleBottomNav(simpleSection) { simpleSection = it } },
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
                 if (missingPermissions.isNotEmpty()) PermissionBanner(missingPermissions.size, onRequestPermissions)
                 BackgroundServiceBanner()
                 if (mode == ViewMode.SIMPLE) {
-                    Box(Modifier.navigationBarsPadding()) { SimpleScreen(viewModel(factory = factory)) }
+                    SimpleScreen(viewModel(factory = factory), section = simpleSection, onNavigate = { simpleSection = it })
                 } else AnimatedContent(
                     targetState = tab,
                     transitionSpec = {
@@ -298,6 +303,42 @@ private fun PermissionBanner(count: Int, onRequest: () -> Unit) {
             modifier = Modifier.weight(1f),
         )
         TextButton(onClick = onRequest) { Text("Conceder", color = Amber) }
+    }
+}
+
+@Composable
+private fun SimpleBottomNav(current: SimpleSection, onSelect: (SimpleSection) -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(Color.Transparent, Ink.copy(alpha = 0.92f), Ink))),
+    ) {
+        NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp) {
+            SimpleSection.entries.forEach { sct ->
+                NavigationBarItem(
+                    selected = current == sct,
+                    onClick = { onSelect(sct) },
+                    icon = {
+                        Icon(
+                            when (sct) {
+                                SimpleSection.HOME -> androidx.compose.material.icons.Icons.Filled.Home
+                                SimpleSection.RESULT -> androidx.compose.material.icons.Icons.Filled.Checklist
+                                SimpleSection.SEND -> androidx.compose.material.icons.Icons.Filled.AutoAwesome
+                            },
+                            contentDescription = sct.label,
+                        )
+                    },
+                    label = { Text(sct.label, style = MaterialTheme.typography.labelSmall) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Cyan,
+                        selectedTextColor = Cyan,
+                        indicatorColor = Cyan.copy(alpha = 0.18f),
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                    ),
+                )
+            }
+        }
     }
 }
 
