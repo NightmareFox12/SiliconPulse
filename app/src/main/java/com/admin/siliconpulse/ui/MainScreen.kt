@@ -78,6 +78,9 @@ import com.admin.siliconpulse.ui.theme.Mint
 import com.admin.siliconpulse.ui.theme.Outline
 import com.admin.siliconpulse.ui.theme.Panel
 import com.admin.siliconpulse.ui.theme.TextMuted
+import com.admin.siliconpulse.ui.theme.Violet
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 
 enum class Tab(val label: String, val title: String, val caption: String, val icon: ImageVector) {
     SENSORS("Sensores", "Osciloscopio", "SensorManager en crudo", Icons.Filled.Build),
@@ -114,6 +117,7 @@ fun MainScreen(container: AppContainer, missingPermissions: List<String>, onRequ
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
                 if (missingPermissions.isNotEmpty()) PermissionBanner(missingPermissions.size, onRequestPermissions)
+                BackgroundServiceBanner()
                 if (mode == ViewMode.SIMPLE) {
                     Box(Modifier.navigationBarsPadding()) { SimpleScreen(viewModel(factory = factory)) }
                 } else AnimatedContent(
@@ -153,8 +157,13 @@ private fun Header(tab: Tab, mode: ViewMode, onMode: (ViewMode) -> Unit) {
             DeviceChip()
         }
         Spacer(Modifier.height(10.dp))
-        Text(if (mode == ViewMode.SIMPLE) "Tu telefono" else tab.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
-        Text(if (mode == ViewMode.SIMPLE) "Resumen facil de entender" else tab.caption, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(if (mode == ViewMode.SIMPLE) "Tu telefono" else tab.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+                Text(if (mode == ViewMode.SIMPLE) "Resumen facil de entender" else tab.caption, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+            }
+            PauseToggle()
+        }
         Spacer(Modifier.height(12.dp))
         ModeSwitch(mode, onMode)
     }
@@ -197,6 +206,55 @@ private fun ModeSwitch(mode: ViewMode, onMode: (ViewMode) -> Unit) {
                 }
             }
         }
+    }
+}
+
+/** En vivo / Pausado: congela todo el monitoreo aunque la app siga abierta. */
+@Composable
+private fun PauseToggle() {
+    val paused by MonitoringController.userPaused.collectAsStateWithLifecycle()
+    val c = if (paused) Amber else Mint
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(c.copy(alpha = 0.12f))
+            .border(1.dp, c.copy(alpha = 0.5f), RoundedCornerShape(50))
+            .clickable { MonitoringController.togglePaused() }
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Icon(
+            if (paused) androidx.compose.material.icons.Icons.Filled.PlayArrow else androidx.compose.material.icons.Icons.Filled.Pause,
+            contentDescription = null, tint = c, modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(if (paused) "Pausado" else "En vivo", style = MaterialTheme.typography.labelLarge, color = c, maxLines = 1, softWrap = false)
+    }
+}
+
+/** Aviso cuando el monitor de deep sleep sigue corriendo en segundo plano. */
+@Composable
+private fun BackgroundServiceBanner() {
+    val running by com.admin.siliconpulse.data.power.SleepWatchService.running.collectAsStateWithLifecycle()
+    if (!running) return
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Violet.copy(alpha = 0.10f))
+            .border(1.dp, Violet.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+            .padding(start = 14.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "El monitor de deep sleep sigue activo en segundo plano (consumo minimo).",
+            style = MaterialTheme.typography.bodySmall,
+            color = Violet,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = { com.admin.siliconpulse.data.power.SleepWatchService.stop(ctx) }) { Text("Detener", color = Violet) }
     }
 }
 

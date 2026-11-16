@@ -45,6 +45,7 @@ class SleepWatchService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        _running.value = true
         createChannel()
         registerReceiver(screenReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
@@ -72,6 +73,7 @@ class SleepWatchService : Service() {
     }
 
     override fun onDestroy() {
+        _running.value = false
         runCatching { unregisterReceiver(screenReceiver) }
         ticker?.cancel()
         scope.cancel()
@@ -103,11 +105,12 @@ class SleepWatchService : Service() {
         )
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_pulse)
-            .setContentTitle("SiliconPulse: monitor de deep sleep")
+            .setContentTitle("SiliconPulse sigue midiendo el deep sleep")
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(openIntent)
+            .setSubText("Toca Detener cuando termines")
             .addAction(Notification.Action.Builder(null, "Detener", stopIntent).build())
             .build()
     }
@@ -123,6 +126,10 @@ class SleepWatchService : Service() {
     }
 
     companion object {
+        private val _running = kotlinx.coroutines.flow.MutableStateFlow(false)
+        /** Verdadero mientras el servicio existe; la UI lo usa para mostrar "activo en segundo plano". */
+        val running: kotlinx.coroutines.flow.StateFlow<Boolean> = _running
+
         const val CHANNEL_ID = "sleep_watch"
         const val NOTIFICATION_ID = 1001
         const val ACTION_STOP = "com.admin.siliconpulse.action.STOP_SLEEP_WATCH"

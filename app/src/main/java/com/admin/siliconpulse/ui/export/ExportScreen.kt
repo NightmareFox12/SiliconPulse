@@ -272,9 +272,6 @@ fun ExportScreen(vm: ExportViewModel) {
                         },
                         enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null), modifier = Modifier.weight(1f),
                     ) { Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Compartir", maxLines = 1) }
-                },
-                        enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null),
-                    ) { Text("Compartir JSON") }
                 }
             }
         }

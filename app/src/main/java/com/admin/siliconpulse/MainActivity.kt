@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.admin.siliconpulse.ui.MainScreen
+import com.admin.siliconpulse.ui.MonitoringController
 import com.admin.siliconpulse.ui.PermissionsBus
 import com.admin.siliconpulse.ui.theme.SiliconPulseTheme
 
@@ -32,6 +33,18 @@ class MainActivity : ComponentActivity() {
 
     private fun missing(): List<String> =
         runtimePermissions.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
+
+    override fun onStart() {
+        super.onStart()
+        MonitoringController.setForeground(true)
+    }
+
+    override fun onStop() {
+        // Al salir de la app se desregistran sensores y callbacks: nada queda corriendo
+        // salvo el servicio opcional de deep sleep.
+        MonitoringController.setForeground(false)
+        super.onStop()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
