@@ -45,11 +45,17 @@ class AppAuditRepository(private val context: Context) {
 
     fun usageAccessIntent(): Intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
 
-    /** Panel de privacidad del sistema (Android 12+): historial oficial de camara/micro/ubicacion por app. */
-    fun privacyDashboardIntent(): Intent? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
-        val i = Intent("android.intent.action.REVIEW_PERMISSION_USAGE")
-        return if (i.resolveActivity(pm) != null) i else Intent(Settings.ACTION_PRIVACY_SETTINGS)
+    /**
+     * Panel de privacidad del sistema (Android 12+): historial oficial de camara/micro/ubicacion por app.
+     * Algunos OEM (p. ej. Infinix/XOS) protegen REVIEW_PERMISSION_USAGE con un permiso de sistema y lanzan
+     * SecurityException, asi que se intenta y, si falla, se abre la pantalla general de Privacidad.
+     */
+    fun openPrivacyDashboard(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val review = Intent("android.intent.action.REVIEW_PERMISSION_USAGE")
+            if (runCatching { context.startActivity(review); true }.getOrDefault(false)) return true
+        }
+        return runCatching { context.startActivity(Intent(Settings.ACTION_PRIVACY_SETTINGS)); true }.getOrDefault(false)
     }
 
     fun appInfoIntent(pkg: String): Intent =

@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.admin.siliconpulse.domain.model.AuditedApp
 import com.admin.siliconpulse.domain.model.SimpleFinding
 import com.admin.siliconpulse.domain.model.Verdict
+import com.admin.siliconpulse.ui.components.AiExportBlock
 import com.admin.siliconpulse.ui.components.Hairline
 import com.admin.siliconpulse.ui.components.Note
 import com.admin.siliconpulse.ui.components.Panel
@@ -113,6 +114,16 @@ fun SimpleScreen(vm: SimpleViewModel) {
                 }
             }
             items(r.findings) { f -> FindingCard(f, vm) }
+            item {
+                AiExportBlock(
+                    visible = true,
+                    fullPrompt = { vm.aiPrompt() },
+                    shortPrompt = { vm.aiPromptShort() },
+                    onMessage = { vm.setMessage(it) },
+                    shareText = { vm.plainText() },
+                )
+                ui.message?.let { Note(it) }
+            }
 
             if (!r.usageAccessGranted) {
                 item {
@@ -133,9 +144,7 @@ fun SimpleScreen(vm: SimpleViewModel) {
                         style = MaterialTheme.typography.bodyMedium, color = TextMuted,
                     )
                     Spacer(Modifier.height(10.dp))
-                    val intent = vm.privacyDashboardIntent()
-                    OutlinedButton(onClick = { intent?.let(ctx::startActivity) }, enabled = intent != null) { Text("Abrir Panel de privacidad") }
-                    if (intent == null) Note("Disponible en Android 12 o superior.")
+                    OutlinedButton(onClick = { if (!vm.openPrivacyDashboard(ctx)) vm.setMessage("No se pudo abrir el panel de privacidad en este telefono.") }) { Text("Abrir Panel de privacidad") }
                 }
             }
             if (r.suspiciousApps.isNotEmpty()) {
