@@ -245,7 +245,7 @@ fun ExportScreen(vm: ExportViewModel) {
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { saveMdLauncher.launch(vm.suggestedName("md")) }, enabled = ui.markdown != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.markdown != null), modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Guardar .md", maxLines = 1)
+                        Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Guardar", maxLines = 1)
                     }
                     OutlinedButton(
                         onClick = {
@@ -273,7 +273,7 @@ fun ExportScreen(vm: ExportViewModel) {
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { saveLauncher.launch(vm.suggestedName()) }, enabled = ui.json != null, colors = secondaryButtonColors(), border = secondaryBorder(ui.json != null), modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Guardar .json", maxLines = 1)
+                        Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Guardar", maxLines = 1)
                     }
                     OutlinedButton(
                         onClick = {
@@ -342,18 +342,18 @@ private fun AiExportCard(onClick: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium, color = TextMuted,
         )
         Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(-6.dp), modifier = Modifier.weight(1f)) {
-                AiTargets.all.forEach { AiLogo(it, 30.dp) }
-            }
-            Button(
-                onClick = onClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Violet, contentColor = androidx.compose.ui.graphics.Color.White),
-            ) {
-                Text("Elegir IA")
-                Spacer(Modifier.width(6.dp))
-                Icon(Icons.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
-            }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            AiTargets.all.forEach { AiLogo(it, 34.dp) }
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Violet, contentColor = androidx.compose.ui.graphics.Color.White),
+        ) {
+            Text("Elegir IA y enviar")
+            Spacer(Modifier.width(6.dp))
+            Icon(Icons.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
         }
     }
 }
