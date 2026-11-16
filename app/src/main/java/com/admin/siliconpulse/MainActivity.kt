@@ -40,8 +40,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        // Al salir de la app se desregistran sensores y callbacks: nada queda corriendo
-        // salvo el servicio opcional de deep sleep.
         MonitoringController.setForeground(false)
         super.onStop()
     }

@@ -14,7 +14,6 @@ import com.admin.siliconpulse.domain.repository.PrivacyRepository
 import com.admin.siliconpulse.domain.repository.RadioRepository
 import com.admin.siliconpulse.domain.repository.SensorRepository
 
-/** Contenedor de dependencias manual: suficiente para un modulo, sin Hilt. */
 class AppContainer(context: Context) {
     val sensors: SensorRepository by lazy { SensorRepositoryImpl(context) }
     val privacy: PrivacyRepository by lazy { PrivacyRepositoryImpl(context) }
