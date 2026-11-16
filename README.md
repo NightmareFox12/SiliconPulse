@@ -31,15 +31,21 @@ Tiene dos vistas que se cambian con un toque:
 
 ## Capturas
 
-<!-- Sube las capturas a docs/screenshots/ y descomenta -->
-<!--
-<p align="center">
-  <img src="docs/screenshots/simple_home.png" width="200">
-  <img src="docs/screenshots/simple_result.png" width="200">
-  <img src="docs/screenshots/pro_sensors.png" width="200">
-  <img src="docs/screenshots/pro_power.png" width="200">
-</p>
--->
+Tema claro y oscuro automatico. Todas las capturas estan en [`docs/screenshots/`](docs/screenshots/).
+
+### Vista sencilla
+
+| Inicio | Resultado | Enviar a IA |
+|---|---|---|
+| <img src="docs/screenshots/dark_simple_home.png" width="230"> | <img src="docs/screenshots/dark_simple_result.png" width="230"> | <img src="docs/screenshots/dark_simple_send.png" width="230"> |
+| <img src="docs/screenshots/light_simple_home.png" width="230"> | <img src="docs/screenshots/light_simple_result.png" width="230"> | <img src="docs/screenshots/light_simple_send.png" width="230"> |
+
+### Vista Pro
+
+| Sensores | Privacidad | Radios | Energia | Informe |
+|---|---|---|---|---|
+| <img src="docs/screenshots/dark_pro_sensors.png" width="180"> | <img src="docs/screenshots/dark_pro_privacy.png" width="180"> | <img src="docs/screenshots/dark_pro_radios.png" width="180"> | <img src="docs/screenshots/dark_pro_power.png" width="180"> | <img src="docs/screenshots/dark_pro_export.png" width="180"> |
+| <img src="docs/screenshots/light_pro_sensors.png" width="180"> | <img src="docs/screenshots/light_pro_privacy.png" width="180"> | <img src="docs/screenshots/light_pro_radios.png" width="180"> | <img src="docs/screenshots/light_pro_power.png" width="180"> | <img src="docs/screenshots/light_pro_export.png" width="180"> |
 
 ## Funciones
 
