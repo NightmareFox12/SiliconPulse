@@ -16,19 +16,27 @@ android {
         applicationId = "com.admin.siliconpulse"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "0.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8: reduce y ofusca el codigo. El mapping.txt se incluye solo en el App Bundle,
+            // asi Play Console puede desofuscar los informes de fallos.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Empaqueta simbolos nativos si alguna libreria los trae. Hoy la unica (.so de Compose,
+            // libandroidx.graphics.path.so) viene ya sin simbolos, asi que Play seguira avisando: es inofensivo.
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
     compileOptions {

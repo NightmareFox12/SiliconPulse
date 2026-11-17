@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Mantiene numeros de linea en los stack traces; el mapping.txt los traduce en Play Console.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# Modelos serializados a JSON (kotlinx.serialization trae sus propias reglas;
+# esto conserva ademas los nombres de campo legibles en el informe exportado).
+-keep,includedescriptorclasses class com.admin.siliconpulse.domain.model.**$$serializer { *; }
+-keepclassmembers class com.admin.siliconpulse.domain.model.** { *** Companion; }
