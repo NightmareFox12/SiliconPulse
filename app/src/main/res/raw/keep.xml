@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Los logos de IA se cargan por nombre con getIdentifier("ai_<id>"); sin esto la reduccion de recursos los eliminaria. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ai_*" />
